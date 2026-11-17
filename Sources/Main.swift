@@ -177,6 +177,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             showIdle(message: "点击“开始收声”以测试麦克风。")
         }
         NSApp.activate(ignoringOtherApps: true)
+        writeSnapshotIfRequested()
+    }
+
+    /// 开发用：设置环境变量 TINGYI_SNAPSHOT=/路径/图.png 启动时，把主窗口渲染成图片后退出（用于检查界面）。
+    /// TINGYI_SNAPSHOT_DEMO=1 时先填入示例字幕。
+    private func writeSnapshotIfRequested() {
+        let environment = ProcessInfo.processInfo.environment
+        guard let path = environment["TINGYI_SNAPSHOT"] else { return }
+        if environment["TINGYI_SNAPSHOT_DARK"] == "1" { NSApp.appearance = NSAppearance(named: .darkAqua) }
+        if environment["TINGYI_SNAPSHOT_DEMO"] == "1" {
+            handleEnglish("Every time you make a recursive call, a new stack frame is pushed onto the call stack. If you forget the base case, the function keeps calling itself. In big O notation, a naive recursive Fibonacci is exponential.")
+            for (index, chinese) in ["每次进行递归调用时，都会有一个新的栈帧被压入调用栈。", "如果忘记了基本情况，函数就会不停地调用自己。"].enumerated()
+                where captionTimeline.lines.indices.contains(index) {
+                _ = captionTimeline.applyTranslation(segment: index, english: captionTimeline.lines[index].english, chinese: chinese)
+            }
+            _ = captionTimeline.toggleLatestMark(seconds: 0)
+            renderCaptions()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, let view = self.window.contentView?.superview ?? self.window.contentView,
+                  let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { exit(1) }
+            view.cacheDisplay(in: view.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            Darwin._exit(0)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
