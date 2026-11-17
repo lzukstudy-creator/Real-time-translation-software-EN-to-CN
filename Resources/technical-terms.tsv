@@ -1,0 +1,370 @@
+# 类别<Tab>英文术语<Tab>中文释义。通用补充词表，不标记为已核对课件。
+软件开发	Git	Git 版本控制工具
+软件开发	GitHub	GitHub 代码托管平台
+软件开发	GitLab	GitLab 代码托管平台
+软件开发	source control	源代码版本控制
+软件开发	remote repository	远程代码仓库
+软件开发	working tree	工作目录树
+软件开发	staging area	暂存区
+软件开发	commit history	提交历史
+软件开发	merge conflict	合并冲突
+软件开发	pull request	拉取请求
+软件开发	code review	代码审查
+软件开发	cherry pick	拣选提交
+软件开发	rebase	变基
+软件开发	forking	派生代码仓库
+软件开发	semantic versioning	语义化版本
+软件开发	package manager	包管理器
+软件开发	dependency management	依赖管理
+软件开发	build tool	构建工具
+软件开发	build system	构建系统
+软件开发	compiler	编译器
+软件开发	interpreter	解释器
+软件开发	debugger	调试器
+软件开发	breakpoint	断点
+软件开发	stack trace	堆栈跟踪
+软件开发	call stack	调用栈
+软件开发	runtime error	运行时错误
+软件开发	type checking	类型检查
+软件开发	static typing	静态类型
+软件开发	dynamic typing	动态类型
+软件开发	type inference	类型推断
+软件开发	generic programming	泛型编程
+软件开发	lambda expression	Lambda 表达式
+软件开发	closure	闭包
+软件开发	recursion	递归
+软件开发	tail recursion	尾递归
+软件开发	asynchronous programming	异步编程
+软件开发	async await	异步等待语法
+软件开发	event loop	事件循环
+软件开发	promise	Promise 异步结果
+软件开发	coroutine	协程
+软件开发	thread pool	线程池
+软件开发	garbage collection	垃圾回收
+软件开发	memory leak	内存泄漏
+软件开发	reference counting	引用计数
+软件开发	hash table	哈希表
+软件开发	linked list	链表
+软件开发	binary tree	二叉树
+软件开发	graph traversal	图遍历
+软件开发	breadth first search	广度优先搜索
+软件开发	depth first search	深度优先搜索
+软件开发	binary search	二分查找
+软件开发	time complexity	时间复杂度
+软件开发	space complexity	空间复杂度
+软件开发	big O notation	大 O 表示法
+软件开发	memoization	记忆化
+软件开发	dynamic programming	动态规划
+软件开发	integration test	集成测试
+软件开发	end to end test	端到端测试
+软件开发	test driven development	测试驱动开发
+软件开发	continuous integration	持续集成
+软件开发	continuous deployment	持续部署
+软件开发	linting	代码规范检查
+软件开发	static analysis	静态分析
+软件开发	dependency injection	依赖注入
+软件开发	inversion of control	控制反转
+软件开发	command line interface	命令行界面
+软件开发	environment variable	环境变量
+软件开发	configuration file	配置文件
+软件开发	feature flag	功能开关
+软件开发	API endpoint	API 端点
+软件开发	REST API	REST 接口
+软件开发	GraphQL	GraphQL 查询语言
+软件开发	WebSocket	WebSocket 双向通信协议
+软件开发	JSON	JSON 数据格式
+软件开发	YAML	YAML 数据格式
+软件开发	HTTP request	HTTP 请求
+软件开发	HTTP response	HTTP 响应
+软件开发	middleware	中间件
+软件开发	authentication	身份认证
+软件开发	authorization	访问授权
+软件开发	session cookie	会话 Cookie
+软件开发	OAuth	OAuth 授权协议
+软件开发	frontend	前端
+软件开发	backend	后端
+软件开发	full stack	全栈开发
+软件开发	JavaScript	JavaScript 编程语言
+软件开发	TypeScript	TypeScript 编程语言
+软件开发	React	React 前端框架
+软件开发	Node.js	Node.js 运行环境
+软件开发	Docker	Docker 容器平台
+软件开发	Kubernetes	Kubernetes 容器编排平台
+
+软件工程	requirements engineering	需求工程
+软件工程	acceptance criteria	验收标准
+软件工程	user journey	用户旅程
+软件工程	wireframe	线框图
+软件工程	product roadmap	产品路线图
+软件工程	release planning	发布规划
+软件工程	technical debt	技术债务
+软件工程	architectural decision record	架构决策记录
+软件工程	domain driven design	领域驱动设计
+软件工程	bounded context	限界上下文
+软件工程	microservice architecture	微服务架构
+软件工程	monolithic architecture	单体架构
+软件工程	layered architecture	分层架构
+软件工程	event driven architecture	事件驱动架构
+软件工程	service oriented architecture	面向服务架构
+软件工程	hexagonal architecture	六边形架构
+软件工程	clean architecture	整洁架构
+软件工程	separation of concerns	关注点分离
+软件工程	single responsibility principle	单一职责原则
+软件工程	open closed principle	开闭原则
+软件工程	Liskov substitution principle	里氏替换原则
+软件工程	interface segregation principle	接口隔离原则
+软件工程	dependency inversion principle	依赖倒置原则
+软件工程	SOLID	SOLID 设计原则
+软件工程	DRY	避免重复原则
+软件工程	KISS	保持简单原则
+软件工程	YAGNI	只实现当前所需原则
+软件工程	design by contract	契约式设计
+软件工程	repository pattern	仓储模式
+软件工程	dependency graph	依赖图
+软件工程	change request	变更请求
+软件工程	risk register	风险登记册
+软件工程	sprint planning	冲刺规划
+软件工程	sprint retrospective	冲刺回顾
+软件工程	backlog refinement	待办事项梳理
+软件工程	burndown chart	燃尽图
+软件工程	cumulative flow diagram	累积流图
+软件工程	definition of done	完成标准
+软件工程	pair programming	结对编程
+软件工程	peer review	同行审查
+软件工程	continuous improvement	持续改进
+软件工程	software maintenance	软件维护
+软件工程	regression testing	回归测试
+软件工程	smoke testing	冒烟测试
+软件工程	load testing	负载测试
+软件工程	performance testing	性能测试
+软件工程	stress testing	压力测试
+软件工程	usability testing	可用性测试
+软件工程	accessibility testing	无障碍测试
+软件工程	security testing	安全测试
+软件工程	test plan	测试计划
+软件工程	test case	测试用例
+软件工程	defect tracking	缺陷跟踪
+软件工程	bug report	缺陷报告
+软件工程	root cause analysis	根因分析
+软件工程	incident postmortem	事故复盘
+软件工程	deployment pipeline	部署流水线
+软件工程	release candidate	候选发布版
+软件工程	rollback	回滚
+软件工程	blue green deployment	蓝绿部署
+软件工程	canary deployment	金丝雀发布
+软件工程	service level objective	服务等级目标
+软件工程	service level indicator	服务等级指标
+软件工程	observability	可观测性
+软件工程	distributed tracing	分布式追踪
+软件工程	error budget	错误预算
+软件工程	API contract	API 契约
+软件工程	data flow diagram	数据流图
+软件工程	state machine	状态机
+软件工程	finite state machine	有限状态机
+软件工程	component diagram	组件图
+软件工程	deployment diagram	部署图
+软件工程	change management	变更管理
+软件工程	configuration management	配置管理
+软件工程	software development lifecycle	软件开发生命周期
+软件工程	DevOps	开发运维一体化
+软件工程	platform engineering	平台工程
+软件工程	quality assurance	质量保证
+软件工程	code ownership	代码归属
+
+数据库	database management system	数据库管理系统
+数据库	RDBMS	关系型数据库管理系统
+数据库	relational database	关系型数据库
+数据库	NoSQL	非关系型数据库
+数据库	document database	文档数据库
+数据库	key value store	键值存储
+数据库	graph database	图数据库
+数据库	columnar database	列式数据库
+数据库	time series database	时序数据库
+数据库	data warehouse	数据仓库
+数据库	data lake	数据湖
+数据库	data mart	数据集市
+数据库	SQL query	SQL 查询
+数据库	inner join	内连接
+数据库	left join	左连接
+数据库	right join	右连接
+数据库	full outer join	全外连接
+数据库	cross join	交叉连接
+数据库	self join	自连接
+数据库	subquery	子查询
+数据库	common table expression	公用表表达式
+数据库	window function	窗口函数
+数据库	aggregate function	聚合函数
+数据库	GROUP BY	分组子句
+数据库	ORDER BY	排序子句
+数据库	unique constraint	唯一约束
+数据库	check constraint	检查约束
+数据库	not null constraint	非空约束
+数据库	B-tree index	B 树索引
+数据库	hash index	哈希索引
+数据库	clustered index	聚簇索引
+数据库	covering index	覆盖索引
+数据库	query optimizer	查询优化器
+数据库	query plan	查询计划
+数据库	execution plan	执行计划
+数据库	table scan	全表扫描
+数据库	index scan	索引扫描
+数据库	transaction	事务
+数据库	ACID properties	ACID 特性
+数据库	atomicity	原子性
+数据库	consistency	一致性
+数据库	isolation	隔离性
+数据库	durability	持久性
+数据库	transaction isolation	事务隔离
+数据库	read committed	读已提交
+数据库	repeatable read	可重复读
+数据库	serializable	可串行化
+数据库	dirty read	脏读
+数据库	phantom read	幻读
+数据库	lost update	丢失更新
+数据库	lock contention	锁争用
+数据库	optimistic locking	乐观锁
+数据库	pessimistic locking	悲观锁
+数据库	multiversion concurrency control	多版本并发控制
+数据库	MVCC	多版本并发控制
+数据库	first normal form	第一范式
+数据库	second normal form	第二范式
+数据库	third normal form	第三范式
+数据库	Boyce Codd normal form	博伊斯—科德范式
+数据库	functional dependency	函数依赖
+数据库	partial dependency	部分依赖
+数据库	transitive dependency	传递依赖
+数据库	denormalization	反规范化
+数据库	schema migration	模式迁移
+数据库	data migration	数据迁移
+数据库	extract transform load	抽取、转换、加载
+数据库	data pipeline	数据流水线
+数据库	replication	数据复制
+数据库	sharding	分片
+数据库	partitioning	分区
+数据库	horizontal partitioning	水平分区
+数据库	vertical partitioning	垂直分区
+数据库	backup and recovery	备份与恢复
+数据库	point in time recovery	时间点恢复
+数据库	write ahead log	预写日志
+数据库	WAL	预写日志
+数据库	database trigger	数据库触发器
+数据库	stored procedure	存储过程
+数据库	materialized view	物化视图
+数据库	ORM	对象关系映射
+数据库	object relational mapping	对象关系映射
+数据库	PostgreSQL	PostgreSQL 数据库
+数据库	MySQL	MySQL 数据库
+数据库	SQLite	SQLite 数据库
+数据库	MongoDB	MongoDB 文档数据库
+数据库	Redis	Redis 键值数据库
+数据库	Elasticsearch	Elasticsearch 搜索引擎
+
+系统与网络	kernel mode	内核态
+系统与网络	user mode	用户态
+系统与网络	system call	系统调用
+系统与网络	interrupt vector	中断向量
+系统与网络	process scheduler	进程调度器
+系统与网络	round robin scheduling	轮转调度
+系统与网络	priority scheduling	优先级调度
+系统与网络	preemptive scheduling	抢占式调度
+系统与网络	virtual address	虚拟地址
+系统与网络	physical address	物理地址
+系统与网络	memory management unit	内存管理单元
+系统与网络	MMU	内存管理单元
+系统与网络	page replacement	页面置换
+系统与网络	least recently used	最近最少使用
+系统与网络	paging	分页
+系统与网络	segmentation	分段
+系统与网络	heap memory	堆内存
+系统与网络	stack memory	栈内存
+系统与网络	buffer overflow	缓冲区溢出
+系统与网络	race condition	竞态条件
+系统与网络	critical section	临界区
+系统与网络	mutex	互斥锁
+系统与网络	semaphore	信号量
+系统与网络	deadlock	死锁
+系统与网络	starvation	饥饿
+系统与网络	livelock	活锁
+系统与网络	thread synchronization	线程同步
+系统与网络	multicore processor	多核处理器
+系统与网络	instruction pipeline	指令流水线
+系统与网络	branch prediction	分支预测
+系统与网络	cache coherence	缓存一致性
+系统与网络	cache line	缓存行
+系统与网络	memory hierarchy	存储层次结构
+系统与网络	locality of reference	局部性原理
+系统与网络	CPU cache	CPU 缓存
+系统与网络	disk IO	磁盘输入输出
+系统与网络	file system	文件系统
+系统与网络	inode	索引节点
+系统与网络	virtual machine	虚拟机
+系统与网络	hypervisor	虚拟机监控器
+系统与网络	containerization	容器化
+系统与网络	virtualization	虚拟化
+系统与网络	distributed system	分布式系统
+系统与网络	load balancing	负载均衡
+系统与网络	fault tolerance	容错能力
+系统与网络	high availability	高可用性
+系统与网络	eventual consistency	最终一致性
+系统与网络	CAP theorem	CAP 定理
+系统与网络	consensus algorithm	共识算法
+系统与网络	leader election	领导者选举
+系统与网络	DNS	域名系统
+系统与网络	domain name system	域名系统
+系统与网络	DHCP	动态主机配置协议
+系统与网络	NAT	网络地址转换
+系统与网络	network address translation	网络地址转换
+系统与网络	IP address	IP 地址
+系统与网络	IPv4	互联网协议第四版
+系统与网络	IPv6	互联网协议第六版
+系统与网络	subnet mask	子网掩码
+系统与网络	CIDR	无类别域间路由
+系统与网络	default gateway	默认网关
+系统与网络	routing table	路由表
+系统与网络	network switch	网络交换机
+系统与网络	ARP	地址解析协议
+系统与网络	MAC address	MAC 地址
+系统与网络	Ethernet frame	以太网帧
+系统与网络	TCP handshake	TCP 握手
+系统与网络	three way handshake	三次握手
+系统与网络	TCP congestion control	TCP 拥塞控制
+系统与网络	flow control	流量控制
+系统与网络	packet loss	丢包
+系统与网络	retransmission	重传
+系统与网络	UDP datagram	UDP 数据报
+系统与网络	HTTP	超文本传输协议
+系统与网络	HTTPS	安全超文本传输协议
+系统与网络	TLS	传输层安全协议
+系统与网络	public key encryption	公钥加密
+系统与网络	symmetric encryption	对称加密
+系统与网络	asymmetric encryption	非对称加密
+系统与网络	digital certificate	数字证书
+系统与网络	certificate authority	证书颁发机构
+系统与网络	VPN	虚拟专用网络
+系统与网络	virtual private network	虚拟专用网络
+系统与网络	firewall	防火墙
+系统与网络	proxy server	代理服务器
+系统与网络	reverse proxy	反向代理
+系统与网络	load balancer	负载均衡器
+系统与网络	throughput	吞吐量
+系统与网络	bandwidth	带宽
+系统与网络	round trip time	往返时间
+系统与网络	RTT	往返时间
+系统与网络	jitter	时延抖动
+系统与网络	packet switching	分组交换
+系统与网络	circuit switching	电路交换
+系统与网络	OSI model	OSI 七层模型
+系统与网络	TCP IP model	TCP/IP 协议模型
+系统与网络	application layer	应用层
+系统与网络	transport layer	传输层
+系统与网络	network layer	网络层
+系统与网络	data link layer	数据链路层
+系统与网络	physical layer	物理层
+系统与网络	socket	套接字
+系统与网络	port number	端口号
+系统与网络	ephemeral port	临时端口
+系统与网络	API gateway	API 网关
+系统与网络	intrusion detection system	入侵检测系统
+系统与网络	intrusion prevention system	入侵防御系统
+系统与网络	denial of service	拒绝服务攻击
+系统与网络	DDoS	分布式拒绝服务攻击

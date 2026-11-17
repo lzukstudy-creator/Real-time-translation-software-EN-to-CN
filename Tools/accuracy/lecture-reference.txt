@@ -1,0 +1,8 @@
+Okay, so let's pick up where we left off yesterday with recursion. Every time you make a recursive call, a new stack frame is pushed onto the call stack, and that frame holds the local variables for that particular call.
+If you forget the base case, the function keeps calling itself and eventually you get a stack overflow. So the base case is the simplest version of the problem, and the recursive step moves you closer to it.
+Now think about the time complexity. In big O notation, a naive recursive Fibonacci is exponential, but with memoization it becomes linear, because each subproblem is solved only once.
+Let's switch to databases. A relational schema is made of tables, and each table has a primary key. A foreign key in one table refers to the primary key of another table, which enforces referential integrity.
+When we normalise a schema, we remove partial dependencies to reach second normal form, and transitive dependencies to reach third normal form. An index can make queries much faster, but it slows down inserts and updates.
+In software engineering, we prefer low coupling and high cohesion. Inheritance lets a subclass reuse behaviour, while polymorphism lets us override a method so that the right version is chosen at run time.
+For network security, remember the three way handshake in TCP. A firewall filters packets, and a man in the middle attack can intercept traffic if the connection is not encrypted with TLS.
+Finally, for your coursework, write unit tests before you refactor, commit often to your Git repository, and open a pull request so that someone else can review your code before it is merged.

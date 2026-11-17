@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>课译 · 界面换肤预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; background: #e8ebef; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif; color: #222; }
+    .page { max-width: 1080px; margin: 0 auto; }
+    .intro { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 18px; }
+    h1 { margin: 0 0 5px; font-size: 24px; letter-spacing: -.03em; }
+    .intro p { margin: 0; color: #657080; font-size: 13px; }
+    .selectors { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .selector { border: 1px solid #d1d7df; background: #fff; border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+    .selector.active { border-color: #5b8be5; box-shadow: 0 0 0 2px #5b8be52b; }
+    .accent-picker { display: flex; align-items: center; gap: 8px; margin: 0 0 13px; color: #66717d; font-size: 12px; }
+    .accent { width: 23px; height: 23px; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--swatch); box-shadow: 0 0 0 1px #bdc4cd; cursor: pointer; }
+    .accent.active { box-shadow: 0 0 0 2px #293344; }
+    .frame { --bg: #f6f8fc; --surface: #fff; --surface2: #f3f6fb; --text: #182232; --secondary: #697789; --border: #e3e8f0; --accent: #3078e8; --accent-soft: #e9f1ff; background: var(--bg); color: var(--text); border: 1px solid rgba(25,35,50,.15); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(26,39,58,.18), 0 3px 10px rgba(26,39,58,.07); min-height: 610px; transition: background .22s, color .22s; }
+    .frame[data-theme="night"] { --bg: #111727; --surface: #1c2639; --surface2: #162033; --text: #f2f5fc; --secondary: #9daec8; --border: #2e3a4f; --accent: #9a80fb; --accent-soft: #332a57; }
+    .frame[data-theme="paper"] { --bg: #f7f3eb; --surface: #fffdf8; --surface2: #f8f0e4; --text: #332b22; --secondary: #84776a; --border: #e8ded0; --accent: #bb6b30; --accent-soft: #fae8d6; }
+    .titlebar { height: 43px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .traffic { display: flex; gap: 8px; }
+    .traffic i { width: 12px; height: 12px; border-radius: 50%; background: #ff6057; box-shadow: inset 0 0 0 1px #0001; }
+    .traffic i:nth-child(2) { background: #ffbd2e; }
+    .traffic i:nth-child(3) { background: #28c840; }
+    .titlebar span { font-size: 12px; color: var(--secondary); font-weight: 600; }
+    .app { padding: 24px 29px 27px; }
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-icon { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 11px; background: var(--accent-soft); color: var(--accent); font-size: 25px; font-weight: 700; }
+    .brand h2 { font-size: 22px; margin: 0 0 2px; line-height: 1; }
+    .brand small { color: var(--secondary); font-size: 12px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .plain-button { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 9px; padding: 9px 11px; font-size: 12px; white-space: nowrap; }
+    .plain-button.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+    .session { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); margin-bottom: 16px; }
+    .status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #33b487; box-shadow: 0 0 0 4px #33b48726; }
+    .session-note { color: var(--secondary); font-size: 12px; margin: 7px 0 0 16px; }
+    .session-right { display: flex; align-items: center; gap: 19px; }
+    .meter { display: flex; align-items: end; gap: 3px; height: 24px; }
+    .meter i { display: block; width: 4px; border-radius: 3px; background: var(--accent); height: var(--h); opacity: var(--o, 1); }
+    .main-button { border: 0; color: #fff; background: var(--accent); border-radius: 10px; font: inherit; font-size: 13px; font-weight: 650; padding: 10px 17px; white-space: nowrap; box-shadow: 0 4px 10px color-mix(in srgb, var(--accent) 25%, transparent); }
+    .transcript { min-height: 326px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .transcript-head { height: 51px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); }
+    .transcript-head strong { font-size: 13px; }
+    .transcript-head span { font-size: 11px; color: var(--secondary); }
+    .lines { padding: 5px 22px 13px; }
+    .pair { padding: 15px 0 14px; border-bottom: 1px solid var(--border); }
+    .pair:last-child { border: 0; }
+    .english { font-size: 14px; line-height: 1.5; color: var(--secondary); margin: 0 0 5px; }
+    .chinese { font-size: 16px; line-height: 1.55; font-weight: 560; margin: 0; }
+    .pair.live .chinese { border-left: 3px solid var(--accent); padding-left: 11px; margin-left: -14px; }
+    .footer { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-top: 15px; }
+    .footer .group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .footer .plain-button { background: transparent; }
+    .footnote { font-size: 11px; color: var(--secondary); text-align: right; }
+    @media (max-width: 760px) { body { padding: 12px; } .intro { display: block; } .selectors { margin-top: 14px; } .app { padding: 18px; } .header { align-items: start; } .header-actions { flex-wrap: wrap; justify-content: end; } .session { grid-template-columns: 1fr; } .session-right { justify-content: space-between; } .footer { align-items: start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="intro"><div><h1>课译 · 新界面提案</h1><p>同一布局，切换底色与点缀色，看看阅读时的感觉。</p></div><div class="selectors" role="group" aria-label="界面风格"><button class="selector active" data-theme="cloud">云白</button><button class="selector" data-theme="night">夜幕</button><button class="selector" data-theme="paper">暖纸</button></div></div>
+    <div class="accent-picker" role="group" aria-label="点缀色">点缀色 <button class="accent active" aria-label="海蓝" title="海蓝" data-color="#3078e8" style="--swatch:#3078e8"></button><button class="accent" aria-label="青绿" title="青绿" data-color="#158d86" style="--swatch:#158d86"></button><button class="accent" aria-label="紫罗兰" title="紫罗兰" data-color="#8b6bdf" style="--swatch:#8b6bdf"></button><button class="accent" aria-label="珊瑚" title="珊瑚" data-color="#d96d67" style="--swatch:#d96d67"></button><button class="accent" aria-label="琥珀" title="琥珀" data-color="#bb6b30" style="--swatch:#bb6b30"></button></div>
+    <section class="frame" data-theme="cloud" aria-label="课译界面预览">
+      <div class="titlebar"><div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div><span>课译</span><span>☷</span></div>
+      <div class="app">
+        <div class="header"><div class="brand"><div class="brand-icon" aria-hidden="true">∞</div><div><h2>课译</h2><small>实时听课 · 英中对照</small></div></div><div class="header-actions"><button class="plain-button">术语表</button><button class="plain-button active">沉浸字幕 ↗</button></div></div>
+        <div class="session"><div><div class="status-line"><span class="status-dot"></span>正在收声并翻译</div><p class="session-note">内建麦克风 · 已自动保存到“课译字幕”</p></div><div class="session-right"><div class="meter" aria-label="声音电平"><i style="--h:7px"></i><i style="--h:15px"></i><i style="--h:22px"></i><i style="--h:11px"></i><i style="--h:19px"></i><i style="--h:9px"></i><i style="--h:16px"></i><i style="--h:6px"></i></div><button class="main-button">停止收声</button></div></div>
+        <div class="transcript"><div class="transcript-head"><strong>实时字幕</strong><span>英中逐段对应 · 自动跟随最新内容</span></div><div class="lines"><div class="pair"><p class="english">Today we will explore how artificial intelligence changes the way we learn.</p><p class="chinese">今天我们将探讨人工智能如何改变我们的学习方式。</p></div><div class="pair"><p class="english">The most important idea is to combine good questions with careful verification.</p><p class="chinese">最重要的是提出好问题，并认真核实得到的答案。</p></div><div class="pair live"><p class="english">In the next section, I will show you a practical example.</p><p class="chinese">接下来，我会展示一个实际例子。</p></div></div></div>
+        <div class="footer"><div class="group"><button class="plain-button">回看</button><button class="plain-button">悬浮字幕</button><button class="plain-button">字幕文件</button><button class="plain-button">导出字幕</button></div><div class="group"><button class="plain-button">A−</button><button class="plain-button">A+</button></div></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const frame = document.querySelector('.frame');
+    document.querySelectorAll('.selector').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('.selector').forEach(item => item.classList.remove('active'));
+      button.classList.add('active'); frame.dataset.theme = button.dataset.theme;
+      const defaults = {cloud: '#3078e8', night: '#9a80fb', paper: '#bb6b30'};
+      frame.style.removeProperty('--accent-soft'); frame.style.setProperty('--accent', defaults[button.dataset.theme]);
+      document.querySelectorAll('.accent').forEach(item => item.classList.toggle('active', item.dataset.color === defaults[button.dataset.theme]));
+    }));
+    document.querySelectorAll('.accent').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('.accent').forEach(item => item.classList.remove('active'));
+      button.classList.add('active'); frame.style.setProperty('--accent', button.dataset.color);
+    }));
+  </script>
+</body>
+</html>

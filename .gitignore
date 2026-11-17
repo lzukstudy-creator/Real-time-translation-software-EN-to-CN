@@ -1,0 +1,17 @@
+# 构建产物与缓存
+.build-cache/
+dist/
+.DS_Store
+__pycache__/
+
+# 本机备份（每份约 670MB）
+backup-app-*/
+*.bak-*
+
+# 模型权重太大（每个约 650MB），用 Tools/fetch-models.sh 下载
+Resources/EnglishModel/*.onnx
+Resources/RefineModel/
+
+# 课件词表含课程代码与课件文件名，属于个人学习资料，不公开；仓库里提供示例
+Resources/coursepack.json
+Resources/AppIconPrevious.jpg
