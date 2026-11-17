@@ -6,7 +6,9 @@
 
 <p align="center"><i>Real-time English → Chinese lecture captions for macOS. Fully on-device.</i></p>
 
-![课译主界面](docs/images/main-window.png)
+| 浅色 | 深色 |
+|---|---|
+| ![课译主界面（浅色）](docs/images/main-window.png) | ![课译主界面（深色）](docs/images/main-window-dark.png) |
 
 ## 功能
 

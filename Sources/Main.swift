@@ -4,7 +4,7 @@ import Darwin
 import SwiftUI
 import UniformTypeIdentifiers
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation, NSToolbarDelegate {
     private var window: NSWindow!
     private var themeRoot: ThemeRootView!
     private var statusCard: NSView!
@@ -30,6 +30,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var smallerButton: NSButton!
     private var largerButton: NSButton!
     private var styleButton: NSPopUpButton!
+    private var languageControl: NSSegmentedControl!
+    private var captionStyleMenu: NSMenu!
+    private var hintPill: NSView!
+    private var hintIcon: NSImageView!
+    private var controlBar: NSView!
     private var floatingWindow: FloatingCaptionWindow?
     private var immersiveWindow: ImmersiveCaptionWindow?
     private let capture = MicrophoneCapture()
@@ -227,12 +232,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func makeWindow() {
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 950, height: 670),
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable],
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 700),
+                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
         window.title = "课译"
+        window.subtitle = "实时听课 · 英中对照"
+        window.titlebarAppearsTransparent = true
+        window.toolbarStyle = .unified
         window.delegate = self
-        window.minSize = NSSize(width: 880, height: 570)
+        window.minSize = NSSize(width: 760, height: 520)
         window.level = alwaysOnTop ? .floating : .normal
         window.center()
 
@@ -241,93 +249,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         themeRoot.onAppearanceChange = { [weak self] in self?.applyTheme() }
         window.contentView = themeRoot
 
-        let brandIcon = NSImageView()
-        if let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns") {
-            brandIcon.image = NSImage(contentsOf: iconURL)
-        }
-        brandIcon.imageScaling = .scaleProportionallyUpOrDown
-        let title = label("课译", size: 24, weight: .bold, color: .labelColor)
-        let subtitle = label("实时听课 · 英中对照", size: 12, weight: .regular, color: .secondaryLabelColor)
-
-        let languagePicker = NSPopUpButton()
-        languagePicker.addItems(withTitles: ["英中对照", "纯英语"])
-        languagePicker.selectItem(at: englishOnly ? 1 : 0)
-        languagePicker.target = self
-        languagePicker.action = #selector(changeLanguage(_:))
+        // 工具栏控件（图标按钮，玻璃材质由系统提供）
+        languageControl = NSSegmentedControl(labels: ["英中对照", "纯英语"], trackingMode: .selectOne,
+                                             target: self, action: #selector(changeLanguageSegment(_:)))
+        languageControl.selectedSegment = englishOnly ? 1 : 0
+        languageControl.toolTip = "字幕显示英中对照，或只显示英文"
         accentPicker = NSPopUpButton(frame: .zero, pullsDown: false)
-        accentPicker.identifier = NSUserInterfaceItemIdentifier("accentPicker")
-        accentPicker.target = self
-        accentPicker.action = #selector(selectAccent(_:))
         for choice in AccentChoice.allCases { accentPicker.addItem(withTitle: choice.title) }
         accentPicker.selectItem(at: AccentChoice.allCases.firstIndex(of: accentChoice) ?? 0)
-        accentPicker.toolTip = "切换课译的点缀色"
-
-        glossaryButton = NSButton(title: "术语表", target: self, action: #selector(showGlossary))
-        immersiveButton = NSButton(title: "沉浸字幕", target: self, action: #selector(showImmersive))
-
-        statusCard = NSView()
-        statusCard.wantsLayer = true
-        let translationStatusView = NSHostingView(rootView: ChineseTranslationHost(translator: translator))
-        statusLabel = label("准备就绪", size: 17, weight: .semibold, color: .labelColor)
-        detailLabel = label("", size: 12, weight: .regular, color: .secondaryLabelColor)
-        detailLabel.lineBreakMode = .byWordWrapping
-        detailLabel.maximumNumberOfLines = 2
-        deviceLabel = label("", size: 11, weight: .regular, color: .secondaryLabelColor)
-        hintLabel = label("专业词提示会显示在这里", size: 12, weight: .regular,
-                          color: .secondaryLabelColor)
-        hintLabel.lineBreakMode = .byTruncatingTail
-
-        levelIndicator = AudioLevelView()
-        levelIndicator.identifier = NSUserInterfaceItemIdentifier("microphoneLevel")
-        levelIndicator.setAccessibilityLabel("麦克风音量")
-
-        actionButton = NSButton(title: "开始收声", target: self, action: #selector(toggleCapture))
-        actionButton.bezelStyle = .rounded
-        actionButton.controlSize = .large
-        actionButton.identifier = NSUserInterfaceItemIdentifier("captureButton")
-        actionButton.keyEquivalent = "\r"
-
-        pauseButton = NSButton(title: "暂停收声", target: self, action: #selector(togglePause))
-        pauseButton.bezelStyle = .rounded
-        pauseButton.controlSize = .large
-        pauseButton.identifier = NSUserInterfaceItemIdentifier("pauseButton")
-        pauseButton.toolTip = "暂时停止收声，字幕保留；可随时继续"
-        pauseButton.isHidden = true
-
+        glossaryButton = toolbarButton("character.book.closed", "术语表（⇧⌘T）", #selector(showGlossary))
+        floatButton = toolbarButton("pip", "悬浮字幕（⇧⌘F）：小窗显示字幕，方便同时看课件", #selector(showFloating))
+        immersiveButton = toolbarButton("arrow.up.left.and.arrow.down.right", "沉浸字幕（⇧⌘I）：全屏只显示字幕",
+                                        #selector(showImmersive))
+        let pin = StateButton(symbols: ["置顶：开": "pin.fill", "置顶：关": "pin"], iconOnly: true)
+        pin.target = self
+        pin.action = #selector(toggleAlwaysOnTop)
+        pin.title = alwaysOnTop ? "置顶：开" : "置顶：关"
+        pin.toolTip = "窗口置顶（⌥⌘T）"
+        topButton = pin
+        captionStyleMenu = makeCaptionStyleMenu()
         exportButton = NSButton(title: "导出字幕", target: self, action: #selector(exportTranscript))
         fileButton = NSButton(title: "字幕文件", target: self, action: #selector(revealTranscript))
         exportButton.isEnabled = false
         fileButton.isEnabled = false
 
-        reviewButton = NSButton(title: "回看", target: self, action: #selector(toggleReview))
-        markButton = NSButton(title: "★ 标记重点", target: self, action: #selector(toggleMark))
-        markButton.toolTip = "把老师正在讲的这一句标为重点（⌘B），保存的字幕里会单独列出"
-        floatButton = NSButton(title: "悬浮字幕", target: self, action: #selector(showFloating))
-        topButton = NSButton(title: alwaysOnTop ? "置顶：开" : "置顶：关",
-                             target: self, action: #selector(toggleAlwaysOnTop))
-        smallerButton = NSButton(title: "A−", target: self, action: #selector(decreaseFont))
-        largerButton = NSButton(title: "A+", target: self, action: #selector(increaseFont))
-        let footerLeft = NSStackView(views: [markButton!, reviewButton!, floatButton!, fileButton!, exportButton!, topButton!])
-        footerLeft.orientation = .horizontal
-        footerLeft.spacing = 8
-        footerLeft.alignment = .centerY
-        styleButton = makeCaptionStyleButton()
-        let footerRight = NSStackView(views: [styleButton!, smallerButton!, largerButton!])
-        footerRight.orientation = .horizontal
-        footerRight.spacing = 6
-        footerRight.alignment = .centerY
-
+        // 字幕卡片：窗口主体
         transcriptCard = NSView()
         transcriptCard.wantsLayer = true
-        let transcriptTitle = label("实时字幕", size: 14, weight: .semibold, color: .labelColor)
-        let transcriptNote = label("英中逐段对应 · 自动跟随最新内容", size: 11,
-                                   weight: .regular, color: .secondaryLabelColor)
-        transcriptDivider = NSView()
-        transcriptDivider.wantsLayer = true
         let preview = NSScrollView()
         preview.hasVerticalScroller = true
         preview.borderType = .noBorder
         preview.drawsBackground = false
+        preview.automaticallyAdjustsContentInsets = false
         captionView = CaptionTextView(frame: NSRect(x: 0, y: 0, width: 680, height: 220))
         captionView.animatesCaptions = true
         captionView.usesFindBar = true
@@ -336,101 +289,229 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         captionView.isSelectable = true
         captionView.drawsBackground = false
         captionView.font = NSFont.systemFont(ofSize: captionFontSize)
-        captionView.textContainerInset = NSSize(width: 20, height: 18)
+        captionView.textContainerInset = NSSize(width: 34, height: 26)
         captionView.string = "英文和中文实时字幕将显示在这里"
         preview.documentView = captionView
         captionView.observeScrolling()
+        let translationStatusView = NSHostingView(rootView: ChineseTranslationHost(translator: translator))
 
-        for view in [brandIcon, title, subtitle, languagePicker, accentPicker!, glossaryButton!, immersiveButton!,
-                     statusCard!, hintLabel!, transcriptCard!, footerLeft, footerRight] {
+        // 术语提示胶囊
+        hintPill = NSView()
+        hintPill.wantsLayer = true
+        hintIcon = NSImageView(image: NSImage(systemSymbolName: "character.book.closed.fill",
+                                              accessibilityDescription: "术语") ?? NSImage())
+        hintIcon.symbolConfiguration = .init(pointSize: 12, weight: .semibold)
+        hintLabel = label("专业词提示会显示在这里", size: 12.5, weight: .medium, color: .secondaryLabelColor)
+        hintLabel.lineBreakMode = .byTruncatingTail
+        hintLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        // 底部玻璃控制条
+        statusLabel = label("准备就绪", size: 14, weight: .semibold, color: .labelColor)
+        detailLabel = label("", size: 11.5, weight: .regular, color: .secondaryLabelColor)
+        detailLabel.lineBreakMode = .byTruncatingTail
+        detailLabel.maximumNumberOfLines = 1
+        detailLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        statusLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        deviceLabel = label("", size: 11, weight: .regular, color: .secondaryLabelColor)
+        levelIndicator = AudioLevelView()
+        levelIndicator.identifier = NSUserInterfaceItemIdentifier("microphoneLevel")
+        levelIndicator.setAccessibilityLabel("麦克风音量")
+
+        let capture = StateButton(symbols: ["开始收声": "mic.fill", "停止收声": "stop.fill"])
+        capture.target = self
+        capture.action = #selector(toggleCapture)
+        capture.title = "开始收声"
+        capture.controlSize = .large
+        capture.identifier = NSUserInterfaceItemIdentifier("captureButton")
+        capture.keyEquivalent = "\r"
+        capture.fillColor = .controlAccentColor
+        actionButton = capture
+
+        let pause = StateButton(symbols: ["暂停收声": "pause.fill", "继续收声": "play.fill"])
+        pause.target = self
+        pause.action = #selector(togglePause)
+        pause.title = "暂停收声"
+        pause.identifier = NSUserInterfaceItemIdentifier("pauseButton")
+        pause.toolTip = "暂时停止收声，字幕保留；可随时继续（⇧⌘R）"
+        pause.isHidden = true
+        pauseButton = pause
+
+        let mark = StateButton(symbols: ["标记重点": "star", "已标记": "star.fill"])
+        mark.target = self
+        mark.action = #selector(toggleMark)
+        mark.title = "标记重点"
+        mark.toolTip = "把老师正在讲的这一句标为重点（⌘B），保存的字幕里会单独列出"
+        markButton = mark
+
+        let review = StateButton(symbols: ["回看": "clock.arrow.circlepath", "回到实时": "dot.radiowaves.left.and.right"])
+        review.target = self
+        review.action = #selector(toggleReview)
+        review.title = "回看"
+        review.toolTip = "冻结画面查看之前的字幕，后台继续收声（⌘L）"
+        reviewButton = review
+
+        smallerButton = NSButton(title: "A−", target: self, action: #selector(decreaseFont))
+        largerButton = NSButton(title: "A+", target: self, action: #selector(increaseFont))
+        styleButton = NSPopUpButton(frame: .zero, pullsDown: true)
+
+        let statusStack = NSStackView(views: [statusLabel!, detailLabel!])
+        statusStack.orientation = .vertical
+        statusStack.alignment = .leading
+        statusStack.spacing = 1
+        statusStack.setHuggingPriority(.defaultLow, for: .horizontal)
+        let tools = NSStackView(views: [pause, mark, review])
+        tools.orientation = .horizontal
+        tools.spacing = 8
+        let bar = NSStackView(views: [capture, statusStack, levelIndicator!, tools, translationStatusView])
+        bar.orientation = .horizontal
+        bar.alignment = .centerY
+        bar.spacing = 16
+        bar.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 14)
+        bar.setCustomSpacing(22, after: levelIndicator)
+        // 控制条：圆角卡片，控件放在里面。
+        let glass = NSView()
+        glass.wantsLayer = true
+        controlBar = glass
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        glass.addSubview(bar)
+        NSLayoutConstraint.activate([
+            bar.topAnchor.constraint(equalTo: glass.topAnchor),
+            bar.bottomAnchor.constraint(equalTo: glass.bottomAnchor),
+            bar.leadingAnchor.constraint(equalTo: glass.leadingAnchor),
+            bar.trailingAnchor.constraint(equalTo: glass.trailingAnchor)
+        ])
+
+        for view in [transcriptCard!, hintPill!, glass] {
             view.translatesAutoresizingMaskIntoConstraints = false
             themeRoot.addSubview(view)
         }
-        for view in [translationStatusView, statusLabel!, detailLabel!, deviceLabel!,
-                     levelIndicator!, pauseButton!, actionButton!] {
+        preview.translatesAutoresizingMaskIntoConstraints = false
+        transcriptCard.addSubview(preview)
+        translationStatusView.translatesAutoresizingMaskIntoConstraints = false
+        for view in [hintIcon!, hintLabel!] {
             view.translatesAutoresizingMaskIntoConstraints = false
-            statusCard.addSubview(view)
+            hintPill.addSubview(view)
         }
-        for view in [transcriptTitle, transcriptNote, transcriptDivider!, preview] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            transcriptCard.addSubview(view)
-        }
+        for view in [capture, pause, mark, review] { view.translatesAutoresizingMaskIntoConstraints = false }
+        let top = (window.contentLayoutGuide as? NSLayoutGuide)?.topAnchor ?? themeRoot.topAnchor
         NSLayoutConstraint.activate([
-            brandIcon.topAnchor.constraint(equalTo: themeRoot.topAnchor, constant: 22),
-            brandIcon.leadingAnchor.constraint(equalTo: themeRoot.leadingAnchor, constant: 28),
-            brandIcon.widthAnchor.constraint(equalToConstant: 42),
-            brandIcon.heightAnchor.constraint(equalToConstant: 42),
-            title.topAnchor.constraint(equalTo: brandIcon.topAnchor, constant: 1),
-            title.leadingAnchor.constraint(equalTo: brandIcon.trailingAnchor, constant: 12),
-            subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 2),
-            subtitle.leadingAnchor.constraint(equalTo: title.leadingAnchor),
-            languagePicker.trailingAnchor.constraint(equalTo: glossaryButton.leadingAnchor, constant: -8),
-            languagePicker.centerYAnchor.constraint(equalTo: accentPicker.centerYAnchor),
-            accentPicker.trailingAnchor.constraint(equalTo: themeRoot.trailingAnchor, constant: -28),
-            accentPicker.centerYAnchor.constraint(equalTo: brandIcon.centerYAnchor),
-            accentPicker.widthAnchor.constraint(equalToConstant: 108),
-            immersiveButton.trailingAnchor.constraint(equalTo: accentPicker.leadingAnchor, constant: -8),
-            immersiveButton.centerYAnchor.constraint(equalTo: accentPicker.centerYAnchor),
-            glossaryButton.trailingAnchor.constraint(equalTo: immersiveButton.leadingAnchor, constant: -8),
-            glossaryButton.centerYAnchor.constraint(equalTo: accentPicker.centerYAnchor),
-            glossaryButton.leadingAnchor.constraint(greaterThanOrEqualTo: subtitle.trailingAnchor, constant: 14),
-
-            statusCard.topAnchor.constraint(equalTo: brandIcon.bottomAnchor, constant: 22),
-            statusCard.leadingAnchor.constraint(equalTo: themeRoot.leadingAnchor, constant: 28),
-            statusCard.trailingAnchor.constraint(equalTo: themeRoot.trailingAnchor, constant: -28),
-            statusCard.heightAnchor.constraint(equalToConstant: 112),
-            statusLabel.topAnchor.constraint(equalTo: statusCard.topAnchor, constant: 16),
-            statusLabel.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: 18),
-            statusLabel.trailingAnchor.constraint(lessThanOrEqualTo: translationStatusView.leadingAnchor, constant: -12),
-            detailLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 5),
-            detailLabel.leadingAnchor.constraint(equalTo: statusLabel.leadingAnchor),
-            detailLabel.trailingAnchor.constraint(lessThanOrEqualTo: levelIndicator.leadingAnchor, constant: -14),
-            deviceLabel.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 7),
-            deviceLabel.leadingAnchor.constraint(equalTo: statusLabel.leadingAnchor),
-            deviceLabel.trailingAnchor.constraint(lessThanOrEqualTo: levelIndicator.leadingAnchor, constant: -14),
-            translationStatusView.topAnchor.constraint(equalTo: statusCard.topAnchor, constant: 10),
-            translationStatusView.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -18),
-            translationStatusView.widthAnchor.constraint(equalToConstant: 250),
-            translationStatusView.heightAnchor.constraint(equalToConstant: 36),
-            actionButton.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -18),
-            actionButton.bottomAnchor.constraint(equalTo: statusCard.bottomAnchor, constant: -16),
-            actionButton.widthAnchor.constraint(equalToConstant: 120),
-            pauseButton.trailingAnchor.constraint(equalTo: actionButton.leadingAnchor, constant: -8),
-            pauseButton.centerYAnchor.constraint(equalTo: actionButton.centerYAnchor),
-            pauseButton.widthAnchor.constraint(equalToConstant: 110),
-            levelIndicator.trailingAnchor.constraint(equalTo: pauseButton.leadingAnchor, constant: -14),
-            levelIndicator.centerYAnchor.constraint(equalTo: actionButton.centerYAnchor),
-            levelIndicator.widthAnchor.constraint(equalToConstant: 76),
-            levelIndicator.heightAnchor.constraint(equalToConstant: 28),
-
-            hintLabel.topAnchor.constraint(equalTo: statusCard.bottomAnchor, constant: 9),
-            hintLabel.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor, constant: 4),
-            hintLabel.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor, constant: -4),
-            transcriptCard.topAnchor.constraint(equalTo: hintLabel.bottomAnchor, constant: 10),
-            transcriptCard.leadingAnchor.constraint(equalTo: statusCard.leadingAnchor),
-            transcriptCard.trailingAnchor.constraint(equalTo: statusCard.trailingAnchor),
-            transcriptCard.bottomAnchor.constraint(equalTo: footerLeft.topAnchor, constant: -14),
-            transcriptTitle.topAnchor.constraint(equalTo: transcriptCard.topAnchor, constant: 15),
-            transcriptTitle.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor, constant: 20),
-            transcriptNote.centerYAnchor.constraint(equalTo: transcriptTitle.centerYAnchor),
-            transcriptNote.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor, constant: -20),
-            transcriptDivider.topAnchor.constraint(equalTo: transcriptCard.topAnchor, constant: 47),
-            transcriptDivider.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor),
-            transcriptDivider.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor),
-            transcriptDivider.heightAnchor.constraint(equalToConstant: 1),
-            preview.topAnchor.constraint(equalTo: transcriptDivider.bottomAnchor),
+            transcriptCard.topAnchor.constraint(equalTo: top, constant: 10),
+            transcriptCard.leadingAnchor.constraint(equalTo: themeRoot.leadingAnchor, constant: 22),
+            transcriptCard.trailingAnchor.constraint(equalTo: themeRoot.trailingAnchor, constant: -22),
+            transcriptCard.bottomAnchor.constraint(equalTo: hintPill.topAnchor, constant: -12),
+            preview.topAnchor.constraint(equalTo: transcriptCard.topAnchor, constant: 1),
             preview.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor, constant: 1),
             preview.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor, constant: -1),
             preview.bottomAnchor.constraint(equalTo: transcriptCard.bottomAnchor, constant: -1),
+            translationStatusView.widthAnchor.constraint(equalToConstant: 150),
+            translationStatusView.heightAnchor.constraint(equalToConstant: 30),
 
-            footerLeft.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor),
-            footerLeft.bottomAnchor.constraint(equalTo: themeRoot.bottomAnchor, constant: -20),
-            footerRight.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor),
-            footerRight.centerYAnchor.constraint(equalTo: footerLeft.centerYAnchor),
-            footerLeft.trailingAnchor.constraint(lessThanOrEqualTo: footerRight.leadingAnchor, constant: -12)
+            hintPill.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor),
+            hintPill.trailingAnchor.constraint(lessThanOrEqualTo: transcriptCard.trailingAnchor),
+            hintPill.heightAnchor.constraint(equalToConstant: 30),
+            hintPill.bottomAnchor.constraint(equalTo: glass.topAnchor, constant: -12),
+            hintIcon.leadingAnchor.constraint(equalTo: hintPill.leadingAnchor, constant: 12),
+            hintIcon.centerYAnchor.constraint(equalTo: hintPill.centerYAnchor),
+            hintLabel.leadingAnchor.constraint(equalTo: hintIcon.trailingAnchor, constant: 7),
+            hintLabel.trailingAnchor.constraint(equalTo: hintPill.trailingAnchor, constant: -14),
+            hintLabel.centerYAnchor.constraint(equalTo: hintPill.centerYAnchor),
+
+            glass.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor),
+            glass.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor),
+            glass.bottomAnchor.constraint(equalTo: themeRoot.bottomAnchor, constant: -18),
+            capture.heightAnchor.constraint(equalToConstant: 40),
+            capture.widthAnchor.constraint(greaterThanOrEqualToConstant: 128),
+            levelIndicator.widthAnchor.constraint(equalToConstant: 76),
+            levelIndicator.heightAnchor.constraint(equalToConstant: 28)
         ])
+
+        let toolbar = NSToolbar(identifier: "TingYiMainToolbar")
+        toolbar.delegate = self
+        toolbar.displayMode = .iconOnly
+        toolbar.allowsUserCustomization = false
+        window.toolbar = toolbar
         applyTheme()
         window.makeKeyAndOrderFront(nil)
+    }
+
+    private func toolbarButton(_ symbol: String, _ tip: String, _ action: Selector) -> NSButton {
+        let button = NSButton(image: NSImage(systemSymbolName: symbol, accessibilityDescription: tip) ?? NSImage(),
+                              target: self, action: action)
+        button.toolTip = tip
+        button.setAccessibilityLabel(tip)
+        return button
+    }
+
+    @objc private func changeLanguageSegment(_ sender: NSSegmentedControl) {
+        englishOnly = sender.selectedSegment == 1
+        UserDefaults.standard.set(englishOnly, forKey: "EnglishOnlyCaptions")
+        renderCaptions()
+    }
+
+    // MARK: 工具栏
+
+    private enum ToolbarID {
+        static let language = NSToolbarItem.Identifier("language")
+        static let glossary = NSToolbarItem.Identifier("glossary")
+        static let floating = NSToolbarItem.Identifier("floating")
+        static let immersive = NSToolbarItem.Identifier("immersive")
+        static let pin = NSToolbarItem.Identifier("pin")
+        static let style = NSToolbarItem.Identifier("style")
+        static let export = NSToolbarItem.Identifier("export")
+    }
+
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace, ToolbarID.language, .space, ToolbarID.glossary, ToolbarID.floating,
+         ToolbarID.immersive, ToolbarID.pin, .space, ToolbarID.style, ToolbarID.export]
+    }
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        toolbarDefaultItemIdentifiers(toolbar)
+    }
+
+    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
+                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        func viewItem(_ view: NSView, _ label: String) -> NSToolbarItem {
+            let item = NSToolbarItem(itemIdentifier: identifier)
+            item.view = view
+            item.label = label
+            item.toolTip = view.toolTip
+            return item
+        }
+        func menuItem(_ symbol: String, _ label: String, _ menu: NSMenu) -> NSToolbarItem {
+            let item = NSMenuToolbarItem(itemIdentifier: identifier)
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
+            item.label = label
+            item.toolTip = label
+            item.menu = menu
+            item.showsIndicator = true
+            return item
+        }
+        switch identifier {
+        case ToolbarID.language: return viewItem(languageControl, "字幕语言")
+        case ToolbarID.glossary: return viewItem(glossaryButton, "术语表")
+        case ToolbarID.floating: return viewItem(floatButton, "悬浮字幕")
+        case ToolbarID.immersive: return viewItem(immersiveButton, "沉浸字幕")
+        case ToolbarID.pin: return viewItem(topButton, "置顶")
+        case ToolbarID.style: return menuItem("textformat.size", "字幕样式与配色", captionStyleMenu)
+        case ToolbarID.export:
+            let menu = NSMenu()
+            for (title, action) in [("导出字幕…（TXT / 笔记 / SRT）", #selector(exportTranscript)),
+                                    ("在访达中显示字幕文件", #selector(revealTranscript))] {
+                let entry = NSMenuItem(title: title, action: action, keyEquivalent: "")
+                entry.target = self
+                menu.addItem(entry)
+            }
+            menu.addItem(.separator())
+            for (title, action) in [("用 Claude 生成课后总结（使用你的订阅额度）", #selector(toggleClaudeSummary)),
+                                    ("重新生成课后总结", #selector(regenerateSummary))] {
+                let entry = NSMenuItem(title: title, action: action, keyEquivalent: "")
+                entry.target = self
+                menu.addItem(entry)
+            }
+            return menuItem("square.and.arrow.up", "导出与总结", menu)
+        default: return nil
+        }
     }
 
     private func applyTheme() {
@@ -438,23 +519,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let palette = AppPalette(appearance: root.effectiveAppearance, accent: accentChoice)
         window.backgroundColor = palette.background
         root.layer?.backgroundColor = palette.background.cgColor
-        for card in [statusCard, transcriptCard] {
-            card?.layer?.backgroundColor = palette.surface.cgColor
-            card?.layer?.borderColor = palette.border.cgColor
-            card?.layer?.borderWidth = 1
-            card?.layer?.cornerRadius = 13
+        if let card = transcriptCard?.layer {
+            card.backgroundColor = palette.surface.cgColor
+            card.borderColor = palette.border.withAlphaComponent(palette.dark ? 0.9 : 0.7).cgColor
+            card.borderWidth = 1
+            card.cornerRadius = 22
+            card.cornerCurve = .continuous
+            card.masksToBounds = true
         }
-        transcriptDivider?.layer?.backgroundColor = palette.border.cgColor
+        if let pill = hintPill?.layer {
+            pill.backgroundColor = palette.accentSoft.cgColor
+            pill.cornerRadius = 15
+            pill.cornerCurve = .continuous
+        }
+        hintIcon?.contentTintColor = palette.accent
+        (actionButton as? StateButton)?.fillColor = palette.accent
+        for button in [pauseButton, markButton, reviewButton] { (button as? StateButton)?.textColor = palette.text }
         statusLabel?.textColor = palette.text
         detailLabel?.textColor = palette.secondary
         deviceLabel?.textColor = palette.secondary
-        hintLabel?.textColor = palette.secondary
+        hintLabel?.textColor = palette.dark ? palette.text : palette.text.withAlphaComponent(0.85)
         levelIndicator?.accentColor = palette.accent
-        actionButton?.bezelColor = palette.accent
+        if let bar = controlBar?.layer {
+            bar.backgroundColor = palette.surface.withAlphaComponent(palette.dark ? 0.92 : 0.96).cgColor
+            bar.borderColor = palette.border.cgColor
+            bar.borderWidth = 1
+            bar.cornerRadius = 30
+            bar.cornerCurve = .continuous
+            bar.shadowColor = NSColor.black.cgColor
+            bar.shadowOpacity = palette.dark ? 0.4 : 0.08
+            bar.shadowRadius = 14
+            bar.shadowOffset = CGSize(width: 0, height: -3)
+        }
         captionView?.applyStyle(captionStyle, palette: palette)
         captionView?.markColor = palette.accent
         for (index, choice) in AccentChoice.allCases.enumerated() {
             accentPicker?.item(at: index)?.image = choice.swatch(dark: palette.dark)
+        }
+        for item in captionStyleMenu?.items ?? [] where item.action == #selector(selectAccentItem(_:)) {
+            if let raw = item.representedObject as? String, let choice = AccentChoice(rawValue: raw) {
+                item.image = choice.swatch(dark: palette.dark)
+                item.state = choice == accentChoice ? .on : .off
+            }
         }
         refreshCaptionStyleMenu(palette: palette)
         floatingWindow?.applyTheme(palette)
@@ -471,15 +577,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     // MARK: 字幕样式（字体与颜色）
 
-    private func makeCaptionStyleButton() -> NSPopUpButton {
-        let button = NSPopUpButton(frame: .zero, pullsDown: true)
-        button.identifier = NSUserInterfaceItemIdentifier("captionStyleButton")
-        button.toolTip = "切换字幕字体和颜色（中英文字幕同时生效）"
+    private func makeCaptionStyleMenu() -> NSMenu {
         let menu = NSMenu()
         menu.autoenablesItems = false
-        menu.addItem(withTitle: "字幕样式", action: nil, keyEquivalent: "")
-        let fontHeader = NSMenuItem.sectionHeader(title: "字体")
-        menu.addItem(fontHeader)
+        menu.addItem(NSMenuItem.sectionHeader(title: "字号"))
+        for (title, action, key) in [("放大字幕", #selector(increaseFont), "="), ("缩小字幕", #selector(decreaseFont), "-")] {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+            item.target = self
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
+        menu.addItem(NSMenuItem.sectionHeader(title: "字体"))
         for choice in CaptionFontChoice.allCases {
             let item = NSMenuItem(title: choice.title, action: #selector(selectCaptionFont(_:)), keyEquivalent: "")
             item.target = self
@@ -490,19 +598,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem.sectionHeader(title: "颜色"))
+        menu.addItem(NSMenuItem.sectionHeader(title: "字幕颜色"))
         for choice in CaptionColorChoice.allCases {
             let item = NSMenuItem(title: choice.title, action: #selector(selectCaptionColor(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = choice.rawValue
             menu.addItem(item)
         }
-        button.menu = menu
-        return button
+        menu.addItem(.separator())
+        menu.addItem(NSMenuItem.sectionHeader(title: "界面点缀色"))
+        for choice in AccentChoice.allCases {
+            let item = NSMenuItem(title: choice.title, action: #selector(selectAccentItem(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = choice.rawValue
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    @objc private func selectAccentItem(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let choice = AccentChoice(rawValue: raw) else { return }
+        accentChoice = choice
+        accentPicker?.selectItem(at: AccentChoice.allCases.firstIndex(of: choice) ?? 0)
+        UserDefaults.standard.set(choice.rawValue, forKey: AccentChoice.preferenceKey)
+        applyTheme()
     }
 
     private func refreshCaptionStyleMenu(palette: AppPalette) {
-        guard let menu = styleButton?.menu else { return }
+        guard let menu = captionStyleMenu else { return }
         for item in menu.items {
             guard let raw = item.representedObject as? String else { continue }
             if item.action == #selector(selectCaptionFont(_:)) {
@@ -644,7 +767,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             lectureTerms = [:]
             lectureTermOrder = []
             sessionStartedDate = Date()
-            markButton?.title = "★ 标记重点"
+            markButton?.title = "标记重点"
             lectureSummary = nil
             submittedSegments = [:]
             lastTranslationSubmit = 0
@@ -906,6 +1029,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         statusLabel.stringValue = "准备就绪"
         detailLabel.stringValue = message
         deviceLabel.stringValue = preferredDevice.map { "输入设备：\($0.name)（内置）" } ?? "输入设备：系统默认麦克风"
+        levelIndicator.toolTip = deviceLabel.stringValue
         actionButton.title = "开始收声"
         pauseButton.isHidden = true
         levelIndicator.level = 0
@@ -935,7 +1059,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         guard captionView != nil else { return }
         let live = englishOnly ? englishCaptions : fullCaptionText
         let content = isReviewing ? (englishOnly ? reviewEnglish : reviewContent) : live
-        hintLabel.isHidden = englishOnly
+        hintPill?.isHidden = englishOnly
         captionView.updateCaptions(content, fontSize: captionFontSize,
                                    allowFollow: !isReviewing, resetFollow: resetFollow)
         floatingWindow?.update(captions: live,
@@ -1123,10 +1247,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let seconds = captionTimeline.lines.indices.last.flatMap { segmentTimes[$0] } ?? 0
         let marked = captionTimeline.toggleLatestMark(seconds: seconds)
         detailLabel.stringValue = marked ? "已把当前这句标为重点；再按一次 ⌘B 取消。" : "已取消重点标记。"
-        markButton.title = marked ? "★ 已标记" : "★ 标记重点"
+        markButton.title = marked ? "已标记" : "标记重点"
         if marked {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                self?.markButton.title = "★ 标记重点"
+                self?.markButton.title = "标记重点"
             }
         }
         syncMarksToArchive()
@@ -1404,6 +1528,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         alert.messageText = title
         alert.informativeText = detail
         alert.runModal()
+    }
+}
+
+/// 标题变化时自动换成对应 SF Symbol 的按钮（开始/停止、暂停/继续、回看/回到实时……）。
+final class StateButton: NSButton {
+    private var symbols: [String: String] = [:]
+    /// 实心胶囊（主操作按钮）的填充色；为 nil 时是无边框的“图标 + 文字”按钮。
+    var fillColor: NSColor? { didSet { restyle() } }
+    var textColor: NSColor = .labelColor { didSet { restyle() } }
+
+    convenience init(symbols: [String: String], iconOnly: Bool = false) {
+        self.init(frame: .zero)
+        self.symbols = symbols
+        isBordered = iconOnly
+        bezelStyle = iconOnly ? .toolbar : .regularSquare
+        imagePosition = iconOnly ? .imageOnly : .imageLeading
+        imageHugsTitle = true
+        symbolConfiguration = .init(pointSize: 13, weight: .semibold)
+    }
+
+    override var title: String {
+        didSet {
+            if let name = symbols[title] {
+                image = NSImage(systemSymbolName: name, accessibilityDescription: title)
+            }
+            setAccessibilityLabel(title)
+            restyle()
+        }
+    }
+
+    override var intrinsicContentSize: NSSize {
+        var size = super.intrinsicContentSize
+        if fillColor != nil { size.width += 28 } else if imagePosition != .imageOnly { size.width += 8 }
+        return size
+    }
+
+    private func restyle() {
+        guard imagePosition != .imageOnly else { return }
+        let color = fillColor == nil ? textColor : .white
+        contentTintColor = color
+        let weight: NSFont.Weight = fillColor == nil ? .medium : .semibold
+        attributedTitle = NSAttributedString(string: super.title, attributes: [
+            .font: NSFont.systemFont(ofSize: fillColor == nil ? 13 : 14, weight: weight),
+            .foregroundColor: color
+        ])
+        if let fillColor {
+            wantsLayer = true
+            layer?.backgroundColor = fillColor.cgColor
+            layer?.cornerRadius = 20
+            layer?.cornerCurve = .continuous
+        }
+        invalidateIntrinsicContentSize()
     }
 }
 
