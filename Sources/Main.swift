@@ -4,7 +4,7 @@ import Darwin
 import SwiftUI
 import UniformTypeIdentifiers
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
     private var window: NSWindow!
     private var themeRoot: ThemeRootView!
     private var statusCard: NSView!
@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var exportButton: NSButton!
     private var fileButton: NSButton!
     private var reviewButton: NSButton!
+    private var markButton: NSButton!
     private var floatButton: NSButton!
     private var immersiveButton: NSButton!
     private var topButton: NSButton!
@@ -58,6 +59,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var englishText = ""
     private var chineseText = ""
     private var captionTimeline = CaptionTimeline()
+    /// 每一句第一次出现的时间（距开始收声的秒数），用于导出 SRT 和笔记。
+    private var segmentTimes: [Int: Double] = [:]
+    /// 本节课出现过的术语（导出笔记用）。
+    private var lectureTerms: [String: (english: String, chinese: String)] = [:]
+    private var lectureTermOrder: [String] = []
+    private var sessionStartedDate = Date()
     private var lectureSummary: String?
     private var submittedSegments: [Int: String] = [:]
     private var translationID = 0
@@ -111,6 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let recovered = BilingualArchive.recover(staging: stagingDirectory,
                                                  destination: transcriptDirectory)
         makeWindow()
+        buildMainMenu()
         translator.onResult = { [weak self] input, chinese in
             guard let self else { return }
             let current = input.session == self.sessionGeneration
@@ -119,6 +127,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self.displayedTranslationID = input.id
             if self.captionTimeline.applyTranslation(segment: input.segment,
                                                      english: input.english, chinese: chinese) {
+                if self.captionTimeline.isMarked(input.segment) { self.syncMarksToArchive() }
                 self.chineseText = chinese
                 self.archive?.setTranslation(segment: input.segment, seconds: input.seconds,
                                              english: input.english, chinese: chinese)
@@ -198,7 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                           backing: .buffered, defer: false)
         window.title = "课译"
         window.delegate = self
-        window.minSize = NSSize(width: 780, height: 570)
+        window.minSize = NSSize(width: 880, height: 570)
         window.level = alwaysOnTop ? .floating : .normal
         window.center()
 
@@ -266,12 +275,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         fileButton.isEnabled = false
 
         reviewButton = NSButton(title: "回看", target: self, action: #selector(toggleReview))
+        markButton = NSButton(title: "★ 标记重点", target: self, action: #selector(toggleMark))
+        markButton.toolTip = "把老师正在讲的这一句标为重点（⌘B），保存的字幕里会单独列出"
         floatButton = NSButton(title: "悬浮字幕", target: self, action: #selector(showFloating))
         topButton = NSButton(title: alwaysOnTop ? "置顶：开" : "置顶：关",
                              target: self, action: #selector(toggleAlwaysOnTop))
         smallerButton = NSButton(title: "A−", target: self, action: #selector(decreaseFont))
         largerButton = NSButton(title: "A+", target: self, action: #selector(increaseFont))
-        let footerLeft = NSStackView(views: [reviewButton!, floatButton!, fileButton!, exportButton!, topButton!])
+        let footerLeft = NSStackView(views: [markButton!, reviewButton!, floatButton!, fileButton!, exportButton!, topButton!])
         footerLeft.orientation = .horizontal
         footerLeft.spacing = 8
         footerLeft.alignment = .centerY
@@ -294,6 +305,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         preview.drawsBackground = false
         captionView = CaptionTextView(frame: NSRect(x: 0, y: 0, width: 680, height: 220))
         captionView.animatesCaptions = true
+        captionView.usesFindBar = true
+        captionView.isIncrementalSearchingEnabled = true
         captionView.isEditable = false
         captionView.isSelectable = true
         captionView.drawsBackground = false
@@ -414,6 +427,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         levelIndicator?.accentColor = palette.accent
         actionButton?.bezelColor = palette.accent
         captionView?.applyStyle(captionStyle, palette: palette)
+        captionView?.markColor = palette.accent
         for (index, choice) in AccentChoice.allCases.enumerated() {
             accentPicker?.item(at: index)?.image = choice.swatch(dark: palette.dark)
         }
@@ -601,6 +615,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             englishText = ""
             chineseText = ""
             captionTimeline = CaptionTimeline()
+            segmentTimes = [:]
+            lectureTerms = [:]
+            lectureTermOrder = []
+            sessionStartedDate = Date()
+            markButton?.title = "★ 标记重点"
             lectureSummary = nil
             submittedSegments = [:]
             lastTranslationSubmit = 0
@@ -869,10 +888,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func handleEnglish(_ text: String) {
         englishText = text
         captionTimeline.updateEnglish(text)
+        let now = sessionStartedUptime > 0 ? max(0, ProcessInfo.processInfo.systemUptime - sessionStartedUptime) : 0
+        for index in captionTimeline.lines.indices where segmentTimes[index] == nil { segmentTimes[index] = now }
         archive?.setEnglish(text)
         let recent = String(text.suffix(450))
         let context = String(text.suffix(1400))
         let hints = glossary?.suggestions(in: recent, context: context) ?? []
+        for hint in hints where lectureTerms[hint.english.lowercased()] == nil {
+            lectureTerms[hint.english.lowercased()] = (hint.english, hint.chinese)
+            lectureTermOrder.append(hint.english.lowercased())
+        }
         liveHint = hints.isEmpty ? "专业词提示会显示在这里" :
             hints.map { "\($0.english) → \($0.chinese)" }.joined(separator: "    ·    ")
         if !isReviewing { hintLabel.stringValue = liveHint }
@@ -951,28 +976,89 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         glossaryWindow?.show()
     }
 
+    private enum ExportFormat: Int, CaseIterable {
+        case text, markdown, srt
+        var title: String {
+            switch self {
+            case .text: return "英中对照全文（TXT）"
+            case .markdown: return "学习笔记（Markdown：重点、术语、总结、全文）"
+            case .srt: return "字幕文件（SRT，可配合课堂录像）"
+            }
+        }
+        var fileExtension: String {
+            switch self { case .text: return "txt"; case .markdown: return "md"; case .srt: return "srt" }
+        }
+    }
+
+    private var exportLines: [LectureExport.Line] {
+        captionTimeline.lines.enumerated().map { index, line in
+            LectureExport.Line(start: segmentTimes[index] ?? 0, english: line.english,
+                               chinese: line.chinese, marked: captionTimeline.isMarked(index))
+        }
+    }
+
     @objc private func exportTranscript() {
         guard archive != nil || savedTranscriptURL != nil else { return }
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = savedTranscriptURL?.lastPathComponent ?? archive?.stagingURL.lastPathComponent ?? "课译字幕.txt"
+        let base = (savedTranscriptURL ?? archive?.stagingURL)?.deletingPathExtension().lastPathComponent ?? "课译字幕"
+        // 只有本次打开 App 后收声的内容才有逐句时间，可导出笔记和 SRT。
+        let formats: [ExportFormat] = captionTimeline.lines.isEmpty ? [.text] : ExportFormat.allCases
+        let picker = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 360, height: 26), pullsDown: false)
+        formats.forEach { picker.addItem(withTitle: $0.title) }
+        let remembered = UserDefaults.standard.integer(forKey: "TingYiExportFormat")
+        picker.selectItem(at: formats.firstIndex { $0.rawValue == remembered } ?? 0)
+        let label = NSTextField(labelWithString: "格式：")
+        let accessory = NSStackView(views: [label, picker])
+        accessory.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        panel.accessoryView = accessory
+        func format() -> ExportFormat { formats[max(0, picker.indexOfSelectedItem)] }
+        func applyExtension() {
+            panel.allowedContentTypes = [UTType(filenameExtension: format().fileExtension) ?? .plainText]
+            panel.nameFieldStringValue = base + "." + format().fileExtension
+        }
+        applyExtension()
+        let changeTarget = ClosureTarget { applyExtension() }
+        picker.target = changeTarget
+        picker.action = #selector(ClosureTarget.run)
         panel.begin { [weak self] response in
+            withExtendedLifetime(changeTarget) {}
             guard let self, response == .OK, let target = panel.url else { return }
-            if let archive = self.archive {
-                archive.export(to: target) { [weak self] result in
-                    if case .failure(let error) = result {
-                        DispatchQueue.main.async { self?.showMessage("导出失败", error.localizedDescription) }
-                    }
-                }
-            } else if let source = self.savedTranscriptURL {
+            let chosen = format()
+            UserDefaults.standard.set(chosen.rawValue, forKey: "TingYiExportFormat")
+            switch chosen {
+            case .markdown, .srt:
+                let lines = self.exportLines
+                let end = self.sessionActive ? ProcessInfo.processInfo.systemUptime - self.sessionStartedUptime
+                    : (lines.last.map { $0.start + 6 } ?? 0)
+                let terms = self.lectureTermOrder.compactMap { self.lectureTerms[$0] }
+                let content = chosen == .srt ? LectureExport.srt(lines, end: end)
+                    : LectureExport.markdown(lines, date: self.sessionStartedDate, terms: terms,
+                                             summary: self.lectureSummary)
                 DispatchQueue.global(qos: .utility).async { [weak self] in
-                    do {
-                        if source.standardizedFileURL != target.standardizedFileURL {
-                            try Data(contentsOf: source).write(to: target, options: .atomic)
-                        }
-                    } catch {
-                        DispatchQueue.main.async { self?.showMessage("导出失败", error.localizedDescription) }
+                    do { try Data(content.utf8).write(to: target, options: .atomic) }
+                    catch { DispatchQueue.main.async { self?.showMessage("导出失败", error.localizedDescription) } }
+                }
+            case .text:
+                self.exportArchiveText(to: target)
+            }
+        }
+    }
+
+    private func exportArchiveText(to target: URL) {
+        if let archive {
+            archive.export(to: target) { [weak self] result in
+                if case .failure(let error) = result {
+                    DispatchQueue.main.async { self?.showMessage("导出失败", error.localizedDescription) }
+                }
+            }
+        } else if let source = savedTranscriptURL {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                do {
+                    if source.standardizedFileURL != target.standardizedFileURL {
+                        try Data(contentsOf: source).write(to: target, options: .atomic)
                     }
+                } catch {
+                    DispatchQueue.main.async { self?.showMessage("导出失败", error.localizedDescription) }
                 }
             }
         }
@@ -999,6 +1085,146 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 (capture.isRunning ? "回看中 · 后台继续收声" : "回看中")
         }
         renderCaptions()
+    }
+
+    // MARK: 重点标记
+
+    @objc private func toggleMark() {
+        guard !captionTimeline.lines.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let seconds = captionTimeline.lines.indices.last.flatMap { segmentTimes[$0] } ?? 0
+        let marked = captionTimeline.toggleLatestMark(seconds: seconds)
+        detailLabel.stringValue = marked ? "已把当前这句标为重点；再按一次 ⌘B 取消。" : "已取消重点标记。"
+        markButton.title = marked ? "★ 已标记" : "★ 标记重点"
+        if marked {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                self?.markButton.title = "★ 标记重点"
+            }
+        }
+        syncMarksToArchive()
+        renderCaptions()
+    }
+
+    private func syncMarksToArchive() {
+        let lines = captionTimeline.lines
+        let marked = captionTimeline.marks.sorted { $0.key < $1.key }
+            .filter { lines.indices.contains($0.key) }
+            .map { (seconds: $0.value, english: lines[$0.key].english, chinese: lines[$0.key].chinese) }
+        archive?.setMarks(marked)
+    }
+
+    // MARK: 菜单栏与快捷键
+
+    private func buildMainMenu() {
+        let main = NSMenu()
+        func submenu(_ title: String, _ items: [NSMenuItem]) {
+            let holder = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            let menu = NSMenu(title: title)
+            items.forEach(menu.addItem)
+            holder.submenu = menu
+            main.addItem(holder)
+        }
+        func item(_ title: String, _ action: Selector?, _ key: String = "",
+                  _ modifiers: NSEvent.ModifierFlags = .command, target: AnyObject? = nil) -> NSMenuItem {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+            item.keyEquivalentModifierMask = modifiers
+            item.target = target ?? self
+            return item
+        }
+        func responder(_ title: String, _ action: Selector, _ key: String,
+                       _ modifiers: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+            item.keyEquivalentModifierMask = modifiers
+            return item  // 交给当前焦点（文字视图、窗口）处理
+        }
+        submenu("课译", [
+            item("关于课译", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), target: NSApp),
+            .separator(),
+            item("隐藏课译", #selector(NSApplication.hide(_:)), "h", target: NSApp),
+            item("隐藏其他", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option], target: NSApp),
+            .separator(),
+            item("退出课译", #selector(NSApplication.terminate(_:)), "q", target: NSApp)
+        ])
+        submenu("文件", [
+            item("导出字幕…", #selector(exportTranscript), "e", [.command, .shift]),
+            item("在访达中显示字幕文件", #selector(revealTranscript), "o", [.command, .shift]),
+            .separator(),
+            responder("关闭窗口", #selector(NSWindow.performClose(_:)), "w")
+        ])
+        submenu("编辑", [
+            responder("拷贝", #selector(NSText.copy(_:)), "c"),
+            responder("全选", #selector(NSText.selectAll(_:)), "a"),
+            .separator(),
+            item("查找…", #selector(showFind), "f"),
+            item("查找下一个", #selector(findNext), "g"),
+            item("查找上一个", #selector(findPrevious), "g", [.command, .shift])
+        ])
+        submenu("收声", [
+            item("开始收声", #selector(toggleCapture), "r"),
+            item("暂停收声", #selector(togglePause), "r", [.command, .shift]),
+            .separator(),
+            item("标记重点", #selector(toggleMark), "b"),
+            item("回看", #selector(toggleReview), "l"),
+            .separator(),
+            item("术语表", #selector(showGlossary), "t", [.command, .shift])
+        ])
+        submenu("显示", [
+            item("放大字幕", #selector(increaseFont), "="),
+            item("缩小字幕", #selector(decreaseFont), "-"),
+            .separator(),
+            item("悬浮字幕", #selector(showFloating), "f", [.command, .shift]),
+            item("沉浸字幕", #selector(showImmersive), "i", [.command, .shift]),
+            item("返回主界面", #selector(returnToMainWindow), "0"),
+            item("窗口置顶", #selector(toggleAlwaysOnTop), "t", [.command, .option])
+        ])
+        let windowMenu = NSMenu(title: "窗口")
+        windowMenu.addItem(responder("最小化", #selector(NSWindow.performMiniaturize(_:)), "m"))
+        let windowHolder = NSMenuItem(title: "窗口", action: nil, keyEquivalent: "")
+        windowHolder.submenu = windowMenu
+        main.addItem(windowHolder)
+        NSApp.windowsMenu = windowMenu
+        NSApp.mainMenu = main
+    }
+
+    @objc private func returnToMainWindow() { showMainWindow() }
+
+    private func performFind(_ action: NSTextFinder.Action) {
+        if !window.isVisible { showMainWindow() }
+        window.makeFirstResponder(captionView)
+        let sender = NSMenuItem()
+        sender.tag = action.rawValue
+        captionView.performFindPanelAction(sender)
+    }
+
+    @objc private func showFind() { performFind(.showFindInterface) }
+    @objc private func findNext() { performFind(.nextMatch) }
+    @objc private func findPrevious() { performFind(.previousMatch) }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(toggleCapture):
+            menuItem.title = sessionActive ? "停止收声" : "开始收声"
+            return !finishing && !savePanelOpen
+        case #selector(togglePause):
+            menuItem.title = isPaused ? "继续收声" : "暂停收声"
+            return sessionActive && !finishing && worker != nil
+        case #selector(toggleMark):
+            return !captionTimeline.lines.isEmpty
+        case #selector(toggleReview):
+            menuItem.title = isReviewing ? "回到实时" : "回看"
+            return true
+        case #selector(toggleAlwaysOnTop):
+            menuItem.state = alwaysOnTop ? .on : .off
+            return true
+        case #selector(exportTranscript):
+            return archive != nil || savedTranscriptURL != nil
+        case #selector(revealTranscript):
+            return savedTranscriptURL != nil
+        default:
+            return true
+        }
     }
 
     @objc private func showFloating() {
@@ -1054,6 +1280,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         alert.informativeText = detail
         alert.runModal()
     }
+}
+
+/// 让 AppKit 控件的 target/action 调用一个闭包。
+final class ClosureTarget: NSObject {
+    private let body: () -> Void
+    init(_ body: @escaping () -> Void) { self.body = body }
+    @objc func run() { body() }
 }
 
 @main

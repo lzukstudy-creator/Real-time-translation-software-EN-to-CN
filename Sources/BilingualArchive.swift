@@ -19,6 +19,7 @@ final class BilingualArchive: @unchecked Sendable {
     private var english = ""
     private var translations: [Int: TranslationRecord] = [:]
     private var summary: String?
+    private var marks: [(seconds: Double, english: String, chinese: String?)] = []
     private var ended: String?
     private var closed = false
     private var failed: Error?
@@ -59,6 +60,15 @@ final class BilingualArchive: @unchecked Sendable {
             guard !closed else { return }
             translations[segment] = TranslationRecord(segment: segment, seconds: seconds,
                                                       english: english, chinese: chinese)
+            dirty = true
+            flushIfDue(force: true)
+        }
+    }
+
+    func setMarks(_ marked: [(seconds: Double, english: String, chinese: String?)]) {
+        queue.async { [self] in
+            guard !closed else { return }
+            marks = marked
             dirty = true
             flushIfDue(force: true)
         }
@@ -161,6 +171,13 @@ final class BilingualArchive: @unchecked Sendable {
             let second = Int(record.seconds) % 60
             text += String(format: "[%02d:%02d] 英文：%@\n         中文：%@\n\n",
                            minute, second, record.english, record.chinese)
+        }
+        if !marks.isEmpty {
+            text += "\n★ 重点标记\n"
+            for mark in marks {
+                text += String(format: "[%02d:%02d] %@\n", Int(mark.seconds) / 60, Int(mark.seconds) % 60, mark.english)
+                if let chinese = mark.chinese, !chinese.isEmpty { text += "        \(chinese)\n" }
+            }
         }
         if let summary, !summary.isEmpty { text += "\n\(summary)\n" }
         if let ended { text += "\n结束：\(ended)\n" }

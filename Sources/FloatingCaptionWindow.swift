@@ -168,6 +168,7 @@ final class FloatingCaptionWindow: NSObject, NSWindowDelegate {
         scroll?.layer?.borderWidth = 1
         scroll?.layer?.cornerRadius = 12
         textView.applyStyle(.saved, palette: palette)
+        textView.markColor = palette.accent
         termLabel?.textColor = palette.accent
         returnButton?.bezelColor = palette.accentSoft
         pinButton?.bezelColor = alwaysOnTop ? palette.accentSoft : nil

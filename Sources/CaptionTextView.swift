@@ -63,6 +63,10 @@ final class CaptionTextView: NSTextView {
     private var displayedFontSize: CGFloat = 0
     private var primaryTextColor: NSColor = .labelColor
     private var secondaryTextColor: NSColor = .secondaryLabelColor
+    /// 重点标记的颜色（跟随点缀色）。
+    var markColor: NSColor = .systemOrange {
+        didSet { if markColor != oldValue { applyLineStyles() } }
+    }
 
     private var animationEnabled: Bool { smoothFloatingCaptions || animatesCaptions }
     private var reduceMotion: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
@@ -307,6 +311,8 @@ final class CaptionTextView: NSTextView {
         let chineseFont = fontChoice.font(ofSize: baseSize + 1, weight: .medium)
         let englishFont = fontChoice.font(ofSize: baseSize - 1, weight: .regular)
         storage.beginEditing()
+        storage.removeAttribute(.backgroundColor, range: NSRange(location: 0, length: source.length))
+        var markedBlock = false
         if smoothFloatingCaptions, source.length > 0 {
             let paragraph = NSMutableParagraphStyle()
             let height = ceil(baseSize * 1.5)
@@ -317,8 +323,10 @@ final class CaptionTextView: NSTextView {
         }
         source.enumerateSubstrings(in: NSRange(location: 0, length: source.length), options: .byLines) {
             [self] line, range, _, _ in
-            guard let line, !line.isEmpty, range.length > 0 else { return }
+            guard let line, !line.isEmpty, range.length > 0 else { markedBlock = false; return }
             let hasChinese = line.unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
+            let starred = line.hasPrefix(CaptionTimeline.markSymbol)
+            if starred { markedBlock = true } else if !hasChinese { markedBlock = false }
             let paragraph = NSMutableParagraphStyle()
             paragraph.lineSpacing = 4
             paragraph.paragraphSpacing = hasChinese ? 8 : 2
@@ -328,6 +336,15 @@ final class CaptionTextView: NSTextView {
             ], range: range)
             if !smoothFloatingCaptions {
                 storage.addAttribute(.paragraphStyle, value: paragraph, range: range)
+            }
+            // 重点：英文和对应中文加淡色底，像荧光笔划过；星号用点缀色。
+            if markedBlock {
+                storage.addAttribute(.backgroundColor, value: markColor.withAlphaComponent(0.16), range: range)
+                if hasChinese { storage.addAttribute(.foregroundColor, value: primaryTextColor, range: range) }
+            }
+            if starred {
+                storage.addAttribute(.foregroundColor, value: markColor,
+                                     range: NSRange(location: range.location, length: 1))
             }
         }
         storage.endEditing()

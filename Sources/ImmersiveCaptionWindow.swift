@@ -75,6 +75,7 @@ final class ImmersiveCaptionWindow: NSObject, NSWindowDelegate {
         scroll?.layer?.borderWidth = 1
         scroll?.layer?.cornerRadius = 14
         textView.applyStyle(.saved, palette: palette)
+        textView.markColor = palette.accent
         returnButton?.bezelColor = palette.accentSoft
     }
 
