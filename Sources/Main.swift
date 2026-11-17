@@ -811,7 +811,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private func finishArchive(message: String) {
         guard finishing else { return }
         pendingFinalTranslationID = nil
-        lectureSummary = LectureSummary.make(from: captionTimeline.lines)
+        lectureSummary = LectureSummary.make(lines: summaryLines, terms: lectureTermList)
+        if ClaudeSummarizer.enabled, lectureSummary != nil { requestClaudeSummary(replacing: lectureSummary) }
         if isReviewing {
             isReviewing = false
             reviewButton.title = "回看"
@@ -1176,6 +1177,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             item("导出字幕…", #selector(exportTranscript), "e", [.command, .shift]),
             item("在访达中显示字幕文件", #selector(revealTranscript), "o", [.command, .shift]),
             .separator(),
+            item("用 Claude 生成课后总结（使用你的 Claude 订阅额度）", #selector(toggleClaudeSummary)),
+            item("重新生成课后总结", #selector(regenerateSummary)),
+            .separator(),
             responder("关闭窗口", #selector(NSWindow.performClose(_:)), "w")
         ])
         submenu("编辑", [
@@ -1215,6 +1219,97 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     @objc private func returnToMainWindow() { showMainWindow() }
 
+    // MARK: 课后总结
+
+    private var claudeSummaryRunning = false
+
+    private var summaryLines: [LectureSummary.Line] {
+        captionTimeline.lines.enumerated().map { index, line in
+            LectureSummary.Line(start: segmentTimes[index] ?? 0, english: line.english,
+                                chinese: line.chinese, marked: captionTimeline.isMarked(index))
+        }
+    }
+
+    private var lectureTermList: [(english: String, chinese: String)] {
+        lectureTermOrder.compactMap { lectureTerms[$0] }
+    }
+
+    @objc private func toggleClaudeSummary() {
+        let enable = !ClaudeSummarizer.enabled
+        if enable, ClaudeSummarizer.locate() == nil {
+            showMessage("没有找到 Claude Code",
+                        "这个功能通过你电脑上的 Claude Code 生成总结，使用你的 Claude 订阅额度，不额外收费。请先安装 Claude 桌面版或 Claude Code。")
+            return
+        }
+        UserDefaults.standard.set(enable, forKey: ClaudeSummarizer.preferenceKey)
+        detailLabel.stringValue = enable ? "已开启：停止收声后用 Claude 生成课后总结（使用你的订阅额度）。"
+            : "已关闭 Claude 总结，改用本机总结。"
+    }
+
+    @objc private func regenerateSummary() {
+        guard !captionTimeline.lines.isEmpty else { return }
+        let previous = lectureSummary
+        lectureSummary = LectureSummary.make(lines: summaryLines, terms: lectureTermList)
+        if let previous, let lectureSummary { replaceSummaryInSavedFile(previous, with: lectureSummary) }
+        renderCaptions()
+        captionView.resumeFollowing()
+        if ClaudeSummarizer.enabled { requestClaudeSummary(replacing: lectureSummary) }
+    }
+
+    private func requestClaudeSummary(replacing local: String?) {
+        guard !claudeSummaryRunning else { return }
+        claudeSummaryRunning = true
+        let generation = sessionGeneration
+        detailLabel.stringValue = "正在用 Claude 生成课后总结…（使用你的 Claude 订阅额度）"
+        ClaudeSummarizer.summarize(lines: summaryLines, terms: lectureTermList) { [weak self] result in
+            guard let self else { return }
+            self.claudeSummaryRunning = false
+            guard self.sessionGeneration == generation, !self.sessionActive else { return }
+            switch result {
+            case .success(let text):
+                let old = self.lectureSummary
+                self.lectureSummary = text
+                if let old { self.replaceSummaryInSavedFile(old, with: text) }
+                self.renderCaptions()
+                self.captionView.resumeFollowing()
+                self.detailLabel.stringValue = "Claude 课后总结已生成，并写入保存的字幕文件。"
+            case .failure(ClaudeSummarizer.Failure.notLoggedIn):
+                self.detailLabel.stringValue = "Claude Code 未登录，已使用本机总结。"
+                self.offerClaudeLogin()
+            case .failure(let error):
+                self.detailLabel.stringValue = "Claude 总结未完成（\(error.localizedDescription)），已使用本机总结。"
+            }
+        }
+    }
+
+    /// 自动保存的字幕文件已经写入了本机总结，换成新的总结。
+    private func replaceSummaryInSavedFile(_ old: String, with new: String) {
+        guard let url = savedTranscriptURL, old != new else { return }
+        DispatchQueue.global(qos: .utility).async {
+            guard let text = try? String(contentsOf: url, encoding: .utf8), text.contains(old) else { return }
+            try? Data(text.replacingOccurrences(of: old, with: new).utf8).write(to: url, options: .atomic)
+        }
+    }
+
+    private func offerClaudeLogin() {
+        let alert = NSAlert()
+        alert.messageText = "需要登录一次 Claude Code"
+        alert.informativeText = "课译通过你电脑上的 Claude Code 生成总结，使用你的 Claude 订阅额度，不额外收费。\n\n点“打开终端登录”后，在终端里输入 /login 并选择用 Claude 账号（订阅）登录，完成后关闭终端，再用“文件 › 重新生成课后总结”即可。只需登录一次。"
+        alert.addButton(withTitle: "打开终端登录")
+        alert.addButton(withTitle: "以后再说")
+        guard alert.runModal() == .alertFirstButtonReturn, let cli = ClaudeSummarizer.locate() else { return }
+        let script = FileManager.default.temporaryDirectory.appendingPathComponent("课译-登录Claude.command")
+        let escaped = cli.path.replacingOccurrences(of: "'", with: "'\\''")
+        let body = "#!/bin/zsh\nunset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN\ncd ~\necho '在下面输入 /login 登录 Claude 账号，完成后可关闭此窗口。'\nexec '\(escaped)'\n"
+        do {
+            try Data(body.utf8).write(to: script, options: .atomic)
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+            NSWorkspace.shared.open(script)
+        } catch {
+            showMessage("无法打开终端", error.localizedDescription)
+        }
+    }
+
     private func performFind(_ action: NSTextFinder.Action) {
         if !window.isVisible { showMainWindow() }
         window.makeFirstResponder(captionView)
@@ -1247,6 +1342,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             return archive != nil || savedTranscriptURL != nil
         case #selector(revealTranscript):
             return savedTranscriptURL != nil
+        case #selector(toggleClaudeSummary):
+            menuItem.state = ClaudeSummarizer.enabled ? .on : .off
+            return true
+        case #selector(regenerateSummary):
+            return !sessionActive && !finishing && !captionTimeline.lines.isEmpty && !claudeSummaryRunning
         default:
             return true
         }
