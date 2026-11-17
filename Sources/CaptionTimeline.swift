@@ -32,6 +32,12 @@ struct CaptionTimeline {
 
     func isMarked(_ index: Int) -> Bool { marks[index] != nil }
 
+    /// 切换某一句的标记（手机上点这一句的星标）。
+    mutating func toggleMark(at index: Int, seconds: Double) {
+        guard lines.indices.contains(index) else { return }
+        marks[index] = marks[index] == nil ? seconds : nil
+    }
+
     mutating func updateEnglish(_ text: String) {
         let words = text.split(whereSeparator: \.isWhitespace)
         var segments: [String] = []
