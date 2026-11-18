@@ -76,10 +76,19 @@ struct CaptionTimeline {
         return true
     }
 
-    var displayText: String {
+    var displayText: String { displayText(stamp: { _ in nil }) }
+
+    /// 每句开头的时间戳（时:分:秒），和后面的文字之间用两个空格隔开，界面据此把它画成小号灰字。
+    static let stampSeparator = "  "
+
+    static func stampPrefix(_ stamp: String?) -> String {
+        stamp.map { $0 + stampSeparator } ?? ""
+    }
+
+    func displayText(stamp: (Int) -> String?) -> String {
         guard !lines.isEmpty else { return "正在等待讲话…" }
         return lines.enumerated().map { index, line in
-            let english = (marks[index] != nil ? Self.markSymbol : "") + line.english
+            let english = Self.stampPrefix(stamp(index)) + (marks[index] != nil ? Self.markSymbol : "") + line.english
             guard let chinese = line.chinese, !chinese.isEmpty else { return english }
             return "\(english)\n\(chinese)"
         }.joined(separator: "\n\n")

@@ -325,7 +325,8 @@ final class CaptionTextView: NSTextView {
             [self] line, range, _, _ in
             guard let line, !line.isEmpty, range.length > 0 else { markedBlock = false; return }
             let hasChinese = line.unicodeScalars.contains { (0x3400...0x9FFF).contains(Int($0.value)) }
-            let starred = line.hasPrefix(CaptionTimeline.markSymbol)
+            let stampLength = Self.stampLength(line)
+            let starred = (line as NSString).substring(from: stampLength).hasPrefix(CaptionTimeline.markSymbol)
             if starred { markedBlock = true } else if !hasChinese { markedBlock = false }
             let paragraph = NSMutableParagraphStyle()
             paragraph.lineSpacing = 4
@@ -342,12 +343,29 @@ final class CaptionTextView: NSTextView {
                 storage.addAttribute(.backgroundColor, value: markColor.withAlphaComponent(0.16), range: range)
                 if hasChinese { storage.addAttribute(.foregroundColor, value: primaryTextColor, range: range) }
             }
+            if stampLength > 0 {
+                storage.addAttributes([
+                    .font: NSFont.monospacedDigitSystemFont(ofSize: max(11, baseSize - 5), weight: .medium),
+                    .foregroundColor: secondaryTextColor.withAlphaComponent(0.75),
+                    .baselineOffset: 1
+                ], range: NSRange(location: range.location, length: stampLength))
+            }
             if starred {
                 storage.addAttribute(.foregroundColor, value: markColor,
-                                     range: NSRange(location: range.location, length: 1))
+                                     range: NSRange(location: range.location + stampLength, length: 1))
             }
         }
         storage.endEditing()
+    }
+
+    /// 行首“12:34:56  ”时间戳的长度（UTF-16），没有时为 0。
+    private static func stampLength(_ line: String) -> Int {
+        let utf16 = Array(line.utf16.prefix(10))
+        guard utf16.count == 10 else { return 0 }
+        let digits = [0, 1, 3, 4, 6, 7], colons = [2, 5], spaces = [8, 9]
+        guard digits.allSatisfy({ (48...57).contains(utf16[$0]) }), colons.allSatisfy({ utf16[$0] == 58 }),
+              spaces.allSatisfy({ utf16[$0] == 32 }) else { return 0 }
+        return 10
     }
 
     /// 最新字幕距离可视区域底部留出的空白比例（0 = 贴底，0.45 ≈ 屏幕中间）。

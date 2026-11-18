@@ -58,7 +58,9 @@ final class ChineseTranslation: ObservableObject {
                 if Task.isCancelled { return }
                 do {
                     let response = try await translator.translate(input.source)
-                    await MainActor.run { self.onResult?(input, response.targetText) }
+                    // 系统翻译偶尔混进繁体字（如“這”“頭”），统一转成简体再显示和保存。
+                    let chinese = Self.simplified(response.targetText)
+                    await MainActor.run { self.onResult?(input, chinese) }
                 } catch {
                     await MainActor.run { self.setStatus("中文翻译出错：\(error.localizedDescription)") }
                 }
@@ -70,6 +72,12 @@ final class ChineseTranslation: ObservableObject {
                 self.setStatus("中文翻译未就绪：\(error.localizedDescription)")
             }
         }
+    }
+
+    /// 繁体 → 简体（ICU 逐字转换；本来就是简体的字不变）。
+    static func simplified(_ text: String) -> String {
+        guard text.unicodeScalars.contains(where: { $0.value >= 0x3400 }) else { return text }
+        return text.applyingTransform(StringTransform("Hant-Hans"), reverse: false) ?? text
     }
 
     private func setStatus(_ value: String) {

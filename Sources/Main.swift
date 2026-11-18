@@ -85,7 +85,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var reviewEnglish = ""
     private var reviewContent = ""
     private var englishCaptions: String {
-        captionTimeline.lines.isEmpty ? "Waiting for speech…" : captionTimeline.lines.map(\.english).joined(separator: "\n\n")
+        captionTimeline.lines.isEmpty ? "Waiting for speech…" : captionTimeline.lines.enumerated().map { index, line in
+            CaptionTimeline.stampPrefix(captionStamp(index)) + line.english
+        }.joined(separator: "\n\n")
+    }
+
+    private static let stampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
+
+    /// 这一句开始出现时的时刻（时:分:秒）。
+    private func captionStamp(_ index: Int) -> String? {
+        segmentTimes[index].map { Self.stampFormatter.string(from: sessionStartedDate.addingTimeInterval($0)) }
     }
     @objc private func changeLanguage(_ sender: NSPopUpButton) {
         englishOnly = sender.indexOfSelectedItem == 1
@@ -1070,7 +1084,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private var fullCaptionText: String {
-        let captions = captionTimeline.displayText
+        let captions = captionTimeline.displayText(stamp: captionStamp)
         guard let lectureSummary else { return captions }
         return captions + "\n\n────────\n\n" + lectureSummary
     }
@@ -1390,7 +1404,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             self.claudeSummaryRunning = false
             guard self.sessionGeneration == generation, !self.sessionActive else { return }
             switch result {
-            case .success(let text):
+            case .success(let raw):
+                let text = ChineseTranslation.simplified(raw)
                 let old = self.lectureSummary
                 self.lectureSummary = text
                 if let old { self.replaceSummaryInSavedFile(old, with: text) }

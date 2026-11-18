@@ -74,10 +74,20 @@ final class GlossaryStore {
         for term in bundled { byID[term.id] = term }
         for term in supplemental { byID[term.id] = term }
         for term in custom { byID[term.id] = term }
-        terms = byID.values.sorted {
+        // 课件词表里可能有繁体译名，显示前统一成简体。
+        terms = byID.values.map { term in
+            var term = term
+            term.chinese = Self.simplified(term.chinese)
+            return term
+        }.sorted {
             let order = $0.english.localizedCaseInsensitiveCompare($1.english)
             return order == .orderedSame ? $0.course < $1.course : order == .orderedAscending
         }
+    }
+
+    private static func simplified(_ text: String) -> String {
+        guard text.unicodeScalars.contains(where: { $0.value >= 0x3400 }) else { return text }
+        return text.applyingTransform(StringTransform("Hant-Hans"), reverse: false) ?? text
     }
 
     private static func loadSupplemental(_ url: URL) throws -> [Term] {
