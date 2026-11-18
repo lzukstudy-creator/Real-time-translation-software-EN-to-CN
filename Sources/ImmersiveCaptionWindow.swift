@@ -23,7 +23,9 @@ final class ImmersiveCaptionWindow: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
         window.delegate = self
-        window.minSize = NSSize(width: 600, height: 400)
+        window.minSize = NSSize(width: 480, height: 360)
+        // 沉浸字幕也能全屏，并和课件左右分屏。
+        window.collectionBehavior = [.fullScreenPrimary, .fullScreenAllowsTiling]
 
         root = ThemeRootView()
         root.wantsLayer = true

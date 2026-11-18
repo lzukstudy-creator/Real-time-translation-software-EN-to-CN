@@ -15,6 +15,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var detailLabel: NSTextField!
     private var deviceLabel: NSTextField!
     private var levelIndicator: AudioLevelView!
+    private var translationStatusWidth: NSLayoutConstraint!
+    private var translationStatusView: NSView!
+    private var compactLayout: Bool?
     private var actionButton: NSButton!
     private var pauseButton: NSButton!
     private var captionView: CaptionTextView!
@@ -200,11 +203,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     /// 开发用：设置环境变量 TINGYI_SNAPSHOT=/路径/图.png 启动时，把主窗口渲染成图片后退出（用于检查界面）。
-    /// TINGYI_SNAPSHOT_DEMO=1 时先填入示例字幕。
+    /// TINGYI_SNAPSHOT_DEMO=1 时先填入示例字幕；TINGYI_SNAPSHOT_SIZE=宽x高 指定窗口大小。
     private func writeSnapshotIfRequested() {
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment["TINGYI_SNAPSHOT"] else { return }
         if environment["TINGYI_SNAPSHOT_DARK"] == "1" { NSApp.appearance = NSAppearance(named: .darkAqua) }
+        // TINGYI_SNAPSHOT_SIZE=720x818：按指定窗口大小截图（检查半屏并排时的排版）。
+        if let size = environment["TINGYI_SNAPSHOT_SIZE"]?.split(separator: "x").compactMap({ Double($0) }), size.count == 2 {
+            window.setContentSize(NSSize(width: size[0], height: size[1]))
+        }
         if environment["TINGYI_SNAPSHOT_DEMO"] == "1" {
             handleEnglish("Every time you make a recursive call, a new stack frame is pushed onto the call stack. If you forget the base case, the function keeps calling itself. In big O notation, a naive recursive Fibonacci is exponential.")
             for (index, chinese) in ["每次进行递归调用时，都会有一个新的栈帧被压入调用栈。", "如果忘记了基本情况，函数就会不停地调用自己。"].enumerated()
@@ -238,6 +245,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         if !finishing { stopSession(message: "已停止收声；英中字幕已保存。") }
         return .terminateCancel
     }
+    // MARK: 最大化 / 全屏 / 并排
+
+    func windowDidResize(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === window else { return }
+        updateCompactLayout()
+    }
+
+    /// 置顶的窗口不能进全屏或和别的 App 并排，进全屏时先临时取消置顶，退出后恢复。
+    func windowWillEnterFullScreen(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === window else { return }
+        window.level = .normal
+    }
+
+    func windowDidExitFullScreen(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === window else { return }
+        window.level = alwaysOnTop ? .floating : .normal
+    }
+
+    /// 窗口变窄（比如和课件左右并排）时，底部按钮只留图标、隐藏音量条，保证都放得下。
+    private func updateCompactLayout() {
+        guard let contentView = window.contentView, markButton != nil else { return }
+        let width = contentView.bounds.width
+        let compact = width < 900
+        let tiny = width < 620
+        translationStatusWidth.constant = tiny ? 0 : (compact ? 110 : 150)
+        translationStatusView.alphaValue = tiny ? 0 : 1
+        guard compact != compactLayout else { return }
+        compactLayout = compact
+        levelIndicator.isHidden = compact
+        for button in [pauseButton, markButton, reviewButton] {
+            (button as? StateButton)?.compact = compact
+        }
+    }
+
+    @objc private func toggleMainFullScreen() {
+        showMainWindow()
+        window.toggleFullScreen(nil)
+    }
+
+    @objc private func zoomMainWindow() {
+        showMainWindow()
+        window.zoom(nil)
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         guard sessionActive || finishing else { return true }
         pendingClose = true
@@ -254,7 +305,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         window.titlebarAppearsTransparent = false
         window.toolbarStyle = .unified
         window.delegate = self
-        window.minSize = NSSize(width: 760, height: 520)
+        // 最小尺寸要小于半屏（13 寸屏一半约 720 宽）和四分之一屏，才能和课件、网页左右或四角并排。
+        window.minSize = NSSize(width: 480, height: 380)
+        window.collectionBehavior = [.fullScreenPrimary, .fullScreenAllowsTiling]
         window.level = alwaysOnTop ? .floating : .normal
         window.center()
 
@@ -308,6 +361,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         preview.documentView = captionView
         captionView.observeScrolling()
         let translationStatusView = NSHostingView(rootView: ChineseTranslationHost(translator: translator))
+        self.translationStatusView = translationStatusView
 
         // 术语提示胶囊
         hintPill = NSView()
@@ -408,6 +462,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
         for view in [capture, pause, mark, review] { view.translatesAutoresizingMaskIntoConstraints = false }
         let top = (window.contentLayoutGuide as? NSLayoutGuide)?.topAnchor ?? themeRoot.topAnchor
+        translationStatusWidth = translationStatusView.widthAnchor.constraint(equalToConstant: 150)
         NSLayoutConstraint.activate([
             transcriptCard.topAnchor.constraint(equalTo: top, constant: 10),
             transcriptCard.leadingAnchor.constraint(equalTo: themeRoot.leadingAnchor, constant: 22),
@@ -417,7 +472,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             preview.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor, constant: 1),
             preview.trailingAnchor.constraint(equalTo: transcriptCard.trailingAnchor, constant: -1),
             preview.bottomAnchor.constraint(equalTo: transcriptCard.bottomAnchor, constant: -1),
-            translationStatusView.widthAnchor.constraint(equalToConstant: 150),
+            translationStatusWidth,
             translationStatusView.heightAnchor.constraint(equalToConstant: 30),
 
             hintPill.leadingAnchor.constraint(equalTo: transcriptCard.leadingAnchor),
@@ -445,6 +500,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         toolbar.allowsUserCustomization = false
         window.toolbar = toolbar
         applyTheme()
+        updateCompactLayout()
         window.makeKeyAndOrderFront(nil)
     }
 
@@ -1348,6 +1404,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         ])
         let windowMenu = NSMenu(title: "窗口")
         windowMenu.addItem(responder("最小化", #selector(NSWindow.performMiniaturize(_:)), "m"))
+        windowMenu.addItem(item("最大化", #selector(zoomMainWindow)))
+        windowMenu.addItem(item("全屏（可和其他 App 左右分屏）", #selector(toggleMainFullScreen), "f", [.command, .control]))
         let windowHolder = NSMenuItem(title: "窗口", action: nil, keyEquivalent: "")
         windowHolder.submenu = windowMenu
         main.addItem(windowHolder)
@@ -1474,6 +1532,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         case #selector(toggleReview):
             menuItem.title = isReviewing ? "回到实时" : "回看"
             return true
+        case #selector(toggleMainFullScreen):
+            menuItem.title = window.styleMask.contains(.fullScreen) ? "退出全屏" : "全屏（可和其他 App 左右分屏）"
+            return true
         case #selector(toggleAlwaysOnTop):
             menuItem.state = alwaysOnTop ? .on : .off
             return true
@@ -1550,6 +1611,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 final class StateButton: NSButton {
     private var symbols: [String: String] = [:]
     private var iconOnly = false
+    /// 窄窗口时只显示图标（文字仍作为辅助功能标签和提示）。
+    var compact = false {
+        didSet {
+            guard !iconOnly, compact != oldValue else { return }
+            imagePosition = compact ? .imageOnly : .imageLeading
+            if !compact { restyle() }
+            invalidateIntrinsicContentSize()
+        }
+    }
     /// 实心胶囊（主操作按钮）的填充色；为 nil 时是无边框的“图标 + 文字”按钮。
     var fillColor: NSColor? { didSet { restyle() } }
     var textColor: NSColor = .labelColor { didSet { restyle() } }
