@@ -1,15 +1,17 @@
 import SwiftUI
 
-/// 四套主题 + 跟随系统（浅色用晨雾，深色用墨夜）。
+/// 主题：跟随系统（浅色用晨雾，深色用墨夜）+ 四套质感主题 + 四套苹果风格主题。
 enum ThemeID: String, CaseIterable, Identifiable {
-    case auto, mist, ink, paper, graphite
+    case auto, mist, ink, paper, graphite, appleLight, appleDark, pro, focus
     var id: String { rawValue }
     static let storageKey = "KeYiTheme"
 }
 
 struct KeYiTheme {
-    enum ButtonKind { case candy, glow, seal, metal }
-    enum Texture { case none, ruled, brushed }
+    enum ButtonKind { case candy, glow, seal, metal, system, pro }
+    enum Texture { case none, ruled, brushed, aurora }
+    /// 主界面版式：经典（前四套）、原生（大标题 + 分组卡片）、Pro（波形时间轴 + 时间码）、专注（只看最新一句）。
+    enum Layout { case classic, native, pro, focus }
 
     let id: ThemeID
     let title: String
@@ -34,6 +36,10 @@ struct KeYiTheme {
     let englishItalic: Bool
     let buttonKind: ButtonKind
     let corner: CGFloat
+    var layout: Layout = .classic
+    var separator: Color = .clear
+    /// 重点星标 / 菱形的颜色。
+    var highlight: Color = .yellow
 
     static func resolve(_ id: ThemeID, system: ColorScheme) -> KeYiTheme {
         switch id {
@@ -42,6 +48,10 @@ struct KeYiTheme {
         case .ink: return .ink
         case .paper: return .paper
         case .graphite: return .graphite
+        case .appleLight: return .appleLight
+        case .appleDark: return .appleDark
+        case .pro: return .pro
+        case .focus: return .focus
         }
     }
 
@@ -92,6 +102,56 @@ struct KeYiTheme {
         activeStops: [.hex(0xFF8C7F), .hex(0xE2392B), .hex(0xE2392B)],
         markFill: .hex(0x5FD3A6).opacity(0.07), markStroke: .hex(0x5FD3A6).opacity(0.3),
         chineseDesign: .default, englishDesign: .monospaced, englishItalic: false, buttonKind: .metal, corner: 12)
+
+    // 苹果风格：照 iOS 26 的系统颜色、分组卡片和 Liquid Glass 来做。
+
+    static let appleLight = KeYiTheme(
+        id: .appleLight, title: "原生浅色", subtitle: "大标题、分组卡片，像系统自带 App", scheme: .light,
+        backgroundTop: .hex(0xF2F2F7), backgroundBottom: .hex(0xF2F2F7), texture: .none,
+        surface: .white, surfaceStroke: .clear,
+        chinese: .black, english: .hex(0x3C3C43).opacity(0.6), secondary: .hex(0x3C3C43).opacity(0.6),
+        accent: .hex(0x0088FF), onIdle: .white,
+        idleStops: [.hex(0xFF3B30), .hex(0xFF3B30), .hex(0xD70015)],
+        activeStops: [.hex(0xFF3B30), .hex(0xFF3B30), .hex(0xD70015)],
+        markFill: .hex(0xFFCC00).opacity(0.1), markStroke: .clear,
+        chineseDesign: .default, englishDesign: .default, englishItalic: false, buttonKind: .system, corner: 26,
+        layout: .native, separator: .hex(0x3C3C43).opacity(0.29), highlight: .hex(0xFFCC00))
+
+    static let appleDark = KeYiTheme(
+        id: .appleDark, title: "原生深色", subtitle: "纯黑背景，OLED 更省电", scheme: .dark,
+        backgroundTop: .black, backgroundBottom: .black, texture: .none,
+        surface: .hex(0x1C1C1E), surfaceStroke: .clear,
+        chinese: .white, english: .hex(0xEBEBF5).opacity(0.6), secondary: .hex(0xEBEBF5).opacity(0.6),
+        accent: .hex(0x0A84FF), onIdle: .white,
+        idleStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        activeStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        markFill: .hex(0xFFD60A).opacity(0.09), markStroke: .clear,
+        chineseDesign: .default, englishDesign: .default, englishItalic: false, buttonKind: .system, corner: 26,
+        layout: .native, separator: .hex(0x545458).opacity(0.65), highlight: .hex(0xFFD60A))
+
+    static let pro = KeYiTheme(
+        id: .pro, title: "Pro 深灰", subtitle: "波形时间轴、时间码，一眼看出重点在哪", scheme: .dark,
+        backgroundTop: .hex(0x1C1C1E), backgroundBottom: .hex(0x1C1C1E), texture: .none,
+        surface: .hex(0x2C2C2E), surfaceStroke: .clear,
+        chinese: .white, english: .hex(0xEBEBF5).opacity(0.62), secondary: .hex(0xEBEBF5).opacity(0.6),
+        accent: .hex(0xFF9F0A), onIdle: .white,
+        idleStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        activeStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        markFill: .hex(0xFF9F0A).opacity(0.08), markStroke: .clear,
+        chineseDesign: .default, englishDesign: .default, englishItalic: false, buttonKind: .pro, corner: 9,
+        layout: .pro, separator: .hex(0x38383A), highlight: .hex(0xFF9F0A))
+
+    static let focus = KeYiTheme(
+        id: .focus, title: "专注大字幕", subtitle: "只留最新一句，坐后排也看得清", scheme: .dark,
+        backgroundTop: .hex(0x050507), backgroundBottom: .hex(0x050507), texture: .aurora,
+        surface: .white.opacity(0.1), surfaceStroke: .white.opacity(0.14),
+        chinese: .white, english: .hex(0xEBEBF5).opacity(0.72), secondary: .hex(0xEBEBF5).opacity(0.55),
+        accent: .hex(0x64D2FF), onIdle: .white,
+        idleStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        activeStops: [.hex(0xFF453A), .hex(0xFF453A), .hex(0xD70015)],
+        markFill: .hex(0xFFD60A).opacity(0.1), markStroke: .clear,
+        chineseDesign: .default, englishDesign: .default, englishItalic: false, buttonKind: .system, corner: 22,
+        layout: .focus, separator: .white.opacity(0.12), highlight: .hex(0xFFD60A))
 }
 
 extension EnvironmentValues {
@@ -139,6 +199,12 @@ struct ThemeBackground: View {
                         x += 3
                     }
                 }
+            case .aurora:
+                // 专注主题：两团很淡的蓝紫光，避免纯黑太闷。
+                RadialGradient(colors: [.hex(0x0A84FF).opacity(0.22), .clear], center: UnitPoint(x: 0.2, y: 0.1),
+                               startRadius: 0, endRadius: 420)
+                RadialGradient(colors: [.hex(0x5E5CE6).opacity(0.2), .clear], center: UnitPoint(x: 0.9, y: 0.85),
+                               startRadius: 0, endRadius: 380)
             case .none:
                 EmptyView()
             }
@@ -168,6 +234,8 @@ struct ThemeSurface: ViewModifier {
                     shape.fill(theme.surface)
                 case .metal:
                     shape.fill(theme.surface.shadow(.inner(color: .black.opacity(0.7), radius: 3, y: 2)))
+                case .system, .pro:
+                    shape.fill(theme.surface)
                 }
             }
             .overlay {
@@ -227,13 +295,26 @@ struct RecordButtonStyle: ButtonStyle {
                     .background(Circle().fill(Color.hex(0x16181B)))
                     .overlay(Circle().strokeBorder(active ? theme.accent : .hex(0x3A3F45), lineWidth: 2))
                     .shadow(color: active ? theme.accent.opacity(0.45) : .black.opacity(0.6), radius: active ? 12 : 6, y: active ? 0 : 6)
+            case .system, .pro:
+                // 苹果相机 / 语音备忘录式：白圈 + 红芯；待机是圆，收声中是圆角方块，按下时红芯先收缩变形。
+                let dark = theme.scheme == .dark
+                Circle()
+                    .fill(dark ? Color.hex(0x1C1C1E).opacity(theme.layout == .focus ? 0 : 1) : .white)
+                    .overlay(Circle().strokeBorder(dark ? Color.white : Color.hex(0x3C3C43).opacity(0.22),
+                                                   lineWidth: size * (dark ? 0.045 : 0.06)))
+                    .shadow(color: .black.opacity(dark ? 0.45 : 0.12), radius: 7, y: 4)
+                let core = active ? size * 0.37 : (pressed ? size * 0.62 : size * 0.78)
+                RoundedRectangle(cornerRadius: active ? core * 0.24 : (pressed ? core * 0.34 : core / 2), style: .continuous)
+                    .fill(pressed ? stops[2] : stops[0])
+                    .frame(width: core, height: core)
             }
             configuration.label
                 .offset(y: theme.buttonKind == .seal && pressed ? 3 : 0)
         }
         .frame(width: size, height: size)
-        .scaleEffect(pressed && theme.buttonKind != .seal ? 0.94 : 1)
+        .scaleEffect(pressed && theme.buttonKind != .seal && theme.buttonKind != .system && theme.buttonKind != .pro ? 0.94 : 1)
         .animation(.spring(duration: 0.18, bounce: 0.35), value: pressed)
+        .animation(.spring(duration: 0.32, bounce: 0.25), value: active)
         .sensoryFeedback(.impact(weight: .medium), trigger: pressed) { _, now in now }
     }
 }
@@ -249,6 +330,9 @@ struct RecordGlyph: View {
             ProgressView().tint(theme.buttonKind == .metal ? .hex(0x24272B) : (active ? .white : theme.onIdle))
         } else {
             switch theme.buttonKind {
+            case .system, .pro:
+                EmptyView() // 红芯由按钮样式自己画，才能跟着按下变形
+
             case .seal:
                 Text(active ? "止" : "听")
                     .font(.system(size: 23, weight: .bold, design: .serif))
@@ -279,6 +363,8 @@ struct RecordGlyph: View {
 struct TactileButtonStyle: ButtonStyle {
     let theme: KeYiTheme
     var size: CGFloat = 54
+    /// 苹果主题：放在玻璃控制条里的按钮用灰色实心，单独放的按钮用玻璃。
+    var onPlate = false
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
@@ -288,7 +374,7 @@ struct TactileButtonStyle: ButtonStyle {
             .frame(width: size, height: size)
             .background { background(pressed: pressed) }
             .offset(y: theme.buttonKind == .seal && pressed ? 2 : 0)
-            .scaleEffect(pressed && theme.buttonKind != .seal ? 0.93 : 1)
+            .scaleEffect(pressed && theme.buttonKind != .seal && theme.buttonKind != .pro ? 0.93 : 1)
             .opacity(isEnabled ? 1 : 0.4)
             .animation(.spring(duration: 0.16, bounce: 0.3), value: pressed)
     }
@@ -299,6 +385,7 @@ struct TactileButtonStyle: ButtonStyle {
         case .glow: return .hex(0xE9E3D6)
         case .seal: return .hex(0x2B2419)
         case .metal: return .hex(0x24272B)
+        case .system, .pro: return theme.chinese
         }
     }
 
@@ -330,7 +417,33 @@ struct TactileButtonStyle: ButtonStyle {
                     .shadow(.inner(color: pressed ? .black.opacity(0.4) : .white.opacity(0.5), radius: pressed ? 4 : 0, y: 1)))
                 .overlay(Circle().strokeBorder(Color.hex(0x0C0D0F), lineWidth: 1))
                 .shadow(color: .black.opacity(pressed ? 0.3 : 0.55), radius: pressed ? 2 : 4, y: pressed ? 1 : 3)
+        case .system:
+            if onPlate {
+                Circle().fill(Color.hex(0x767680).opacity(theme.scheme == .dark ? (pressed ? 0.4 : 0.24) : (pressed ? 0.24 : 0.12)))
+            } else {
+                Circle().fill(.clear).glassEffect(.regular.interactive(), in: .circle)
+            }
+        case .pro:
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(pressed ? Color.hex(0x3A3A3C) : Color.hex(0x2C2C2E))
         }
+    }
+}
+
+/// Pro 主题底部三格操作条里的一格。
+struct ProSegmentStyle: ButtonStyle {
+    var emphasized = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 60)
+            .background(configuration.isPressed ? Color.hex(0x48484A) : (emphasized ? Color.hex(0x3A3A3C) : Color.hex(0x2C2C2E)))
+            .opacity(isEnabled ? 1 : 0.45)
+            .sensoryFeedback(.impact(weight: .light), trigger: configuration.isPressed) { _, now in now }
     }
 }
 
@@ -369,6 +482,10 @@ struct ControlPlate: ViewModifier {
                     }.clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))))
                 .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(Color.hex(0x0C0D0F), lineWidth: 1))
                 .shadow(color: .black.opacity(0.6), radius: 15, y: 12)
+        case .system:
+            content.glassEffect(.regular, in: .capsule)
+        case .pro:
+            content
         }
     }
 }

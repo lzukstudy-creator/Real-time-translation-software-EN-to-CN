@@ -16,6 +16,54 @@ struct ContentView: View {
     @State private var showExport = false
 
     var body: some View {
+        Group {
+            switch theme.layout {
+            case .classic: classicLayout
+            case .native: NativeLayout(actions: actions)
+            case .pro: ProLayout(actions: actions)
+            case .focus: FocusLayout(actions: actions)
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // 系统翻译需要这个视图在界面里才会运行；放在最外层，换主题也不会中断。
+            ChineseTranslationHost(translator: session.translator)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+        }
+        .sheet(isPresented: $showSettings) { SettingsView().environmentObject(session) }
+        .sheet(isPresented: $showHistory) { HistoryView() }
+        .sheet(isPresented: $showExport) { ExportView(files: session.exportFiles()) }
+        .confirmationDialog("结束这节课的收声？", isPresented: $confirmStop, titleVisibility: .visible) {
+            Button("结束并保存", role: .destructive) { session.stop() }
+            Button("继续收声", role: .cancel) {}
+        } message: {
+            Text("结束后会生成课后总结，字幕自动保存。")
+        }
+        .alert("出错了", isPresented: Binding(get: { session.errorMessage != nil },
+                                            set: { if !$0 { session.errorMessage = nil } })) {
+            Button("好") { session.errorMessage = nil }
+        } message: {
+            Text(session.errorMessage ?? "")
+        }
+    }
+
+    private var actions: LayoutActions {
+        LayoutActions(history: { showHistory = true }, export: { showExport = true },
+                      settings: { showSettings = true }, record: recordTapped)
+    }
+
+    private func recordTapped() {
+        switch session.phase {
+        case .idle: session.start()
+        case .recording, .paused: confirmStop = true
+        default: break
+        }
+    }
+
+    /// 前四套主题（晨雾、墨夜、纸笺、石墨）的版式。
+    private var classicLayout: some View {
         ZStack(alignment: .bottom) {
             ThemeBackground(theme: theme)
             captions
@@ -42,21 +90,6 @@ struct ContentView: View {
                 LinearGradient(colors: [theme.backgroundTop, theme.backgroundTop.opacity(0)], startPoint: .center, endPoint: .bottom)
                     .ignoresSafeArea()
             }
-        }
-        .sheet(isPresented: $showSettings) { SettingsView().environmentObject(session) }
-        .sheet(isPresented: $showHistory) { HistoryView() }
-        .sheet(isPresented: $showExport) { ExportView(files: session.exportFiles()) }
-        .confirmationDialog("结束这节课的收声？", isPresented: $confirmStop, titleVisibility: .visible) {
-            Button("结束并保存", role: .destructive) { session.stop() }
-            Button("继续收声", role: .cancel) {}
-        } message: {
-            Text("结束后会生成课后总结，字幕自动保存。")
-        }
-        .alert("出错了", isPresented: Binding(get: { session.errorMessage != nil },
-                                            set: { if !$0 { session.errorMessage = nil } })) {
-            Button("好") { session.errorMessage = nil }
-        } message: {
-            Text(session.errorMessage ?? "")
         }
     }
 
@@ -118,13 +151,6 @@ struct ContentView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 11)
         .themeSurface(theme)
-        .overlay(alignment: .bottomTrailing) {
-            // 系统翻译需要这个视图在界面里才会运行。
-            ChineseTranslationHost(translator: session.translator)
-                .frame(width: 1, height: 1)
-                .opacity(0.01)
-                .accessibilityHidden(true)
-        }
     }
 
     // MARK: 字幕
@@ -255,13 +281,7 @@ struct ContentView: View {
             .disabled(!session.hasCaptions)
             .accessibilityLabel("标记重点")
 
-            Button {
-                switch session.phase {
-                case .idle: session.start()
-                case .recording, .paused: confirmStop = true
-                default: break
-                }
-            } label: {
+            Button(action: recordTapped) {
                 RecordGlyph(theme: theme, active: session.isActive,
                             busy: session.phase == .preparing || session.phase == .finishing)
             }

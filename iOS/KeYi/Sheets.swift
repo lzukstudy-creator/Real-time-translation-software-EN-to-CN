@@ -17,10 +17,17 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    ThemePicker(selection: $themeID)
+                    ThemePicker(selection: $themeID, ids: [.auto, .mist, .ink, .paper, .graphite])
                         .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
                         .listRowBackground(Color.clear)
-                } header: { Text("主题") }
+                } header: { Text("主题 · 质感") }
+                Section {
+                    ThemePicker(selection: $themeID, ids: [.appleLight, .appleDark, .pro, .focus])
+                        .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
+                        .listRowBackground(Color.clear)
+                } header: { Text("主题 · 苹果风格") } footer: {
+                    Text("Pro：上方波形是整节课的音量，菱形是重点，点一下跳到那句。专注：只显示最新一句，点屏幕隐藏按钮。")
+                }
 
                 Section {
                     CaptionRow(line: .init(id: 0, english: "A recursive call pushes a new stack frame.",
@@ -93,12 +100,13 @@ struct SettingsView: View {
 
 struct ThemePicker: View {
     @Binding var selection: String
+    var ids: [ThemeID] = ThemeID.allCases
     @Environment(\.colorScheme) private var systemScheme
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(ThemeID.allCases) { id in
+                ForEach(ids) { id in
                     let theme = KeYiTheme.resolve(id, system: systemScheme)
                     let selected = selection == id.rawValue
                     Button { selection = id.rawValue } label: {

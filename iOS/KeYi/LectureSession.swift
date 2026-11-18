@@ -19,6 +19,7 @@ final class LectureSession: ObservableObject {
         let english: String
         let chinese: String?
         let marked: Bool
+        var seconds: TimeInterval? = nil
     }
 
     @Published private(set) var phase: Phase = .idle
@@ -26,6 +27,9 @@ final class LectureSession: ObservableObject {
     @Published private(set) var detail = "点下方按钮开始收声。锁屏后也会继续。"
     @Published private(set) var level: Float = 0
     @Published private(set) var elapsed: TimeInterval = 0
+    /// 整节课的音量，每秒一个峰值，用来画 Pro 主题的波形时间轴。
+    @Published private(set) var levelHistory: [Float] = []
+    private var peakSinceTick: Float = 0
     @Published private(set) var lines: [DisplayLine] = []
     @Published private(set) var hints: [Term] = []
     @Published private(set) var summary: String?
@@ -99,11 +103,11 @@ final class LectureSession: ObservableObject {
     private func loadDemo() {
         lines = [
             DisplayLine(id: 0, english: "So every time we call a function, a new stack frame gets pushed.",
-                        chinese: "所以每次调用函数时，都会压入一个新的栈帧。", marked: false),
+                        chinese: "所以每次调用函数时，都会压入一个新的栈帧。", marked: false, seconds: 821),
             DisplayLine(id: 1, english: "This is exactly why deep recursion can overflow the stack.",
-                        chinese: "这正是深度递归会导致栈溢出的原因。", marked: true),
+                        chinese: "这正是深度递归会导致栈溢出的原因。", marked: true, seconds: 842),
             DisplayLine(id: 2, english: "Let's look at what the frame actually stores.",
-                        chinese: "我们来看看栈帧里实际存了什么。", marked: false)
+                        chinese: "我们来看看栈帧里实际存了什么。", marked: false, seconds: 1934)
         ]
         hints = Array((glossary?.suggestions(in: "the stack frame", context: "call stack frame") ?? []).prefix(1))
         phase = .recording
@@ -111,6 +115,10 @@ final class LectureSession: ObservableObject {
         detail = "本机识别 · 本机翻译 · 已标记 1 处"
         elapsed = 1938
         level = 0.6
+        levelHistory = (0..<1938).map { second in
+            let wave = 0.45 + 0.3 * sin(Double(second) / 37) + 0.15 * sin(Double(second) / 7.3)
+            return Float(max(0.08, min(1, wave + Double((second * 7919) % 13) / 60)))
+        }
     }
     #endif
 
@@ -140,12 +148,18 @@ final class LectureSession: ObservableObject {
         summary = nil
         hints = []
         elapsed = 0
+        levelHistory = []
+        peakSinceTick = 0
         startedDate = Date()
         publishLines()
         translator.prepare()
         let transcriber = LiveTranscriber()
         transcriber.onText = { [weak self] text in self?.handleEnglish(text) }
-        transcriber.onLevel = { [weak self] level in self?.level = level }
+        transcriber.onLevel = { [weak self] level in
+            guard let self else { return }
+            self.level = level
+            self.peakSinceTick = max(self.peakSinceTick, level)
+        }
         transcriber.onError = { [weak self] message in self?.errorMessage = message }
         self.transcriber = transcriber
         let hotwords = glossary?.hotwords ?? []
@@ -258,7 +272,11 @@ final class LectureSession: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 let now = Date()
-                if self.phase == .recording { self.elapsed += now.timeIntervalSince(last) }
+                if self.phase == .recording {
+                    self.elapsed += now.timeIntervalSince(last)
+                    self.levelHistory.append(self.peakSinceTick)
+                    self.peakSinceTick = 0
+                }
                 last = now
             }
         }
@@ -308,7 +326,7 @@ final class LectureSession: ObservableObject {
     private func publishLines() {
         let next = timeline.lines.enumerated().map {
             DisplayLine(id: $0.offset, english: $0.element.english, chinese: $0.element.chinese,
-                        marked: timeline.isMarked($0.offset))
+                        marked: timeline.isMarked($0.offset), seconds: segmentTimes[$0.offset])
         }
         if next != lines {
             lines = next
