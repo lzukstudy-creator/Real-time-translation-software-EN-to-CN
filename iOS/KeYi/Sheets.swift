@@ -5,7 +5,8 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var session: LectureSession
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.keyiTheme) private var theme
+    @AppStorage(ThemeID.storageKey) private var themeID = ThemeID.auto.rawValue
     @AppStorage(CaptionAppearance.sizeKey) private var captionSize = 21.0
     @AppStorage(CaptionAppearance.designKey) private var designID = "default"
     @AppStorage(CaptionAppearance.colorKey) private var colorID = "system"
@@ -16,11 +17,20 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    ThemePicker(selection: $themeID)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
+                        .listRowBackground(Color.clear)
+                } header: { Text("主题") }
+
+                Section {
                     CaptionRow(line: .init(id: 0, english: "A recursive call pushes a new stack frame.",
                                            chinese: "递归调用会压入一个新的栈帧。", marked: false),
-                               size: captionSize, design: CaptionAppearance.design(designID),
-                               colors: CaptionAppearance.colors(colorID, dark: colorScheme == .dark), mode: modeID)
-                        .padding(.vertical, 6)
+                               latest: true, size: captionSize,
+                               fonts: CaptionAppearance.fonts(designID, theme: theme),
+                               colors: CaptionAppearance.colors(colorID, theme: theme), mode: modeID, theme: theme)
+                        .padding(14)
+                        .background(ThemeBackground(theme: theme).clipShape(RoundedRectangle(cornerRadius: 14)))
+                        .listRowInsets(EdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6))
                 } header: { Text("预览") }
 
                 Section("字幕") {
@@ -57,6 +67,13 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    LabeledContent("开始收声", value: "Siri / 操作按钮 / 快捷指令")
+                    LabeledContent("锁屏", value: "显示最新一句和时长")
+                } header: { Text("快捷操作") } footer: {
+                    Text("在“设置 › 操作按钮”里选“快捷指令 › 课译 › 开始收声”，上课时按一下侧边按钮就能开始；也可以对 Siri 说“用课译开始收声”。锁屏上可以直接标重点、暂停。")
+                }
+
+                Section {
                     LabeledContent("识别", value: "iPhone 本机 · Apple SpeechAnalyzer")
                     LabeledContent("翻译", value: "iPhone 本机 · Apple 翻译")
                 } header: { Text("关于") } footer: {
@@ -68,6 +85,54 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
+        }
+    }
+}
+
+// MARK: 主题选择
+
+struct ThemePicker: View {
+    @Binding var selection: String
+    @Environment(\.colorScheme) private var systemScheme
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(ThemeID.allCases) { id in
+                    let theme = KeYiTheme.resolve(id, system: systemScheme)
+                    let selected = selection == id.rawValue
+                    Button { selection = id.rawValue } label: {
+                        VStack(spacing: 8) {
+                            ZStack {
+                                ThemeBackground(theme: theme)
+                                VStack(spacing: 8) {
+                                    RoundedRectangle(cornerRadius: 3).fill(theme.english.opacity(0.5)).frame(width: 64, height: 5)
+                                    RoundedRectangle(cornerRadius: 3).fill(theme.chinese).frame(width: 74, height: 7)
+                                    Spacer(minLength: 0)
+                                    Button {} label: { RecordGlyph(theme: theme, active: false, busy: false).scaleEffect(0.6) }
+                                        .buttonStyle(RecordButtonStyle(theme: theme, active: false, size: 44))
+                                        .allowsHitTesting(false)
+                                }
+                                .padding(.vertical, 14)
+                            }
+                            .frame(width: 104, height: 132)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.1), lineWidth: selected ? 3 : 1))
+                            VStack(spacing: 1) {
+                                Text(KeYiTheme.title(of: id)).font(.subheadline.weight(selected ? .semibold : .regular))
+                                Text(id == .auto ? "晨雾 / 墨夜" : theme.subtitle)
+                                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                            }
+                            .frame(width: 104)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("主题：\(KeYiTheme.title(of: id))")
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+            .padding(.horizontal, 16)
         }
     }
 }

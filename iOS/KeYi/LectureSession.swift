@@ -9,6 +9,9 @@ import UIKit
 /// 分句、翻译、存档、术语、导出、总结都与电脑版共用同一份代码（Sources/ 下的共享文件）。
 @MainActor
 final class LectureSession: ObservableObject {
+    /// 整个 App 只有一个收声会话；快捷指令和锁屏按钮也通过它操作。
+    static let shared = LectureSession()
+
     enum Phase: Equatable { case idle, preparing, recording, paused, finishing }
 
     struct DisplayLine: Identifiable, Equatable {
@@ -44,6 +47,7 @@ final class LectureSession: ObservableObject {
     private var clock: Timer?
     private var startedDate = Date()
     private var interruptionObserver: NSObjectProtocol?
+    private let liveActivity = LiveCaptionActivity()
 
     var isActive: Bool { phase == .recording || phase == .paused }
     var hasCaptions: Bool { !timeline.lines.isEmpty }
@@ -83,6 +87,40 @@ final class LectureSession: ObservableObject {
             let resume = ((note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt) ?? 0)
                 & AVAudioSession.InterruptionOptions.shouldResume.rawValue != 0
             Task { @MainActor in self?.handleInterruption(type, shouldResume: resume) }
+        }
+        KeYiIntentBridge.handler = { [weak self] action in self?.perform(action) }
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-KeYiDemo") { loadDemo() }
+        #endif
+    }
+
+    #if DEBUG
+    /// 仅调试版：填入示例字幕，用来截图检查各主题。
+    private func loadDemo() {
+        lines = [
+            DisplayLine(id: 0, english: "So every time we call a function, a new stack frame gets pushed.",
+                        chinese: "所以每次调用函数时，都会压入一个新的栈帧。", marked: false),
+            DisplayLine(id: 1, english: "This is exactly why deep recursion can overflow the stack.",
+                        chinese: "这正是深度递归会导致栈溢出的原因。", marked: true),
+            DisplayLine(id: 2, english: "Let's look at what the frame actually stores.",
+                        chinese: "我们来看看栈帧里实际存了什么。", marked: false)
+        ]
+        hints = Array((glossary?.suggestions(in: "the stack frame", context: "call stack frame") ?? []).prefix(1))
+        phase = .recording
+        status = "正在收声"
+        detail = "本机识别 · 本机翻译 · 已标记 1 处"
+        elapsed = 1938
+        level = 0.6
+    }
+    #endif
+
+    /// 快捷指令、Siri、操作按钮、锁屏按钮的动作。
+    func perform(_ action: KeYiAction) {
+        switch action {
+        case .start: if phase == .idle { start() }
+        case .mark: toggleMark()
+        case .pause: if isActive { togglePause() }
+        case .stop: if isActive { stop() }
         }
     }
 
@@ -125,6 +163,7 @@ final class LectureSession: ObservableObject {
                 detail = "锁屏也会继续收声；字幕每秒自动保存。"
                 startClock()
                 applyIdleTimer()
+                liveActivity.start(activityState)
             } catch {
                 self.transcriber = nil
                 phase = .idle
@@ -154,6 +193,7 @@ final class LectureSession: ObservableObject {
             }
         }
         applyIdleTimer()
+        liveActivity.update(activityState, immediate: true)
     }
 
     func stop() {
@@ -174,6 +214,7 @@ final class LectureSession: ObservableObject {
     }
 
     private func finish() {
+        liveActivity.end(activityState)
         summary = LectureSummary.make(lines: summaryLines, terms: termList)
         if let summary { archive?.setSummary(summary) }
         syncMarks()
@@ -204,6 +245,7 @@ final class LectureSession: ObservableObject {
             phase = .paused
             status = "已暂停"
             detail = "被来电或其他声音打断，已暂停；字幕已保留。"
+            liveActivity.update(activityState, immediate: true)
         } else if type == .ended, phase == .paused, shouldResume {
             togglePause()
         }
@@ -268,7 +310,21 @@ final class LectureSession: ObservableObject {
             DisplayLine(id: $0.offset, english: $0.element.english, chinese: $0.element.chinese,
                         marked: timeline.isMarked($0.offset))
         }
-        if next != lines { lines = next }
+        if next != lines {
+            lines = next
+            if isActive { liveActivity.update(activityState) }
+        }
+    }
+
+    /// 锁屏实时字幕要显示的内容。
+    private var activityState: LiveCaptionAttributes.ContentState {
+        let chinese = lines.last(where: { !($0.chinese ?? "").isEmpty })?.chinese ?? ""
+        return LiveCaptionAttributes.ContentState(
+            chinese: chinese.isEmpty ? "正在听…" : String(chinese.suffix(90)),
+            english: String((lines.last?.english ?? "").suffix(140)),
+            startedAt: Date().addingTimeInterval(-elapsed),
+            pausedElapsed: phase == .paused ? elapsed : nil,
+            marks: timeline.marks.count)
     }
 
     // MARK: 重点、总结、导出
@@ -279,6 +335,7 @@ final class LectureSession: ObservableObject {
         timeline.toggleLatestMark(seconds: seconds)
         syncMarks()
         publishLines()
+        liveActivity.update(activityState, immediate: true)
         #if os(iOS)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         #endif

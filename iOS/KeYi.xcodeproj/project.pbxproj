@@ -17,7 +17,32 @@
 		D1D44030B5B3E8191D921532 /* LectureExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627C7A41DE5E2D1281B36192 /* LectureExport.swift */; };
 		F2CBDA6BD735734B35B60055 /* GlossaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE916F54DB1A0B9B8CD26BE1 /* GlossaryStore.swift */; };
 		FA507D1E6A9988DFCB5D06C0 /* ChineseTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65953F999B3884BDFDB51DB8 /* ChineseTranslation.swift */; };
+		A1B2C3D4E5F60718293A4B02 /* KeYiWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B01 /* KeYiWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A1B2C3D4E5F60718293A4B03 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1B2C3D4E5F60718293A4B08;
+			remoteInfo = KeYiWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A1B2C3D4E5F60718293A4B0F /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A1B2C3D4E5F60718293A4B02 /* KeYiWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		1108A2EE23C7CF334CDCEF69 /* CaptionTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionTimeline.swift; sourceTree = "<group>"; };
@@ -31,6 +56,7 @@
 		D2A57DC1D883FD21FB995169 /* KeYi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeYi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D653A1D1DE1FB1685171216C /* StreamingWords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingWords.swift; sourceTree = "<group>"; };
 		EA6A97A7492EAE4A6AC2BC19 /* LectureSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LectureSummary.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B01 /* KeYiWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KeYiWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -40,6 +66,13 @@
 				Info.plist,
 			);
 			target = 42AEFBAE01D2DFD981F7DA7D /* KeYi */;
+		};
+		A1B2C3D4E5F60718293A4B05 /* Exceptions for "KeYiWidget" folder in "KeYiWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A1B2C3D4E5F60718293A4B08 /* KeYiWidget */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -52,10 +85,30 @@
 			path = KeYi;
 			sourceTree = "<group>";
 		};
+		A1B2C3D4E5F60718293A4B06 /* KeYiWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1B2C3D4E5F60718293A4B05 /* Exceptions for "KeYiWidget" folder in "KeYiWidget" target */,
+			);
+			path = KeYiWidget;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4E5F60718293A4B07 /* KeYiShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeYiShared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		059DB2086B49B680F85B3555 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D4E5F60718293A4B0A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -69,6 +122,8 @@
 			isa = PBXGroup;
 			children = (
 				74C61EEF9C048939045A3EDA /* KeYi */,
+				A1B2C3D4E5F60718293A4B07 /* KeYiShared */,
+				A1B2C3D4E5F60718293A4B06 /* KeYiWidget */,
 				429461E971936A1CC87DA17D /* Shared */,
 				86024CAD1E83101D97359D73 /* Products */,
 			);
@@ -96,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				D2A57DC1D883FD21FB995169 /* KeYi.app */,
+				A1B2C3D4E5F60718293A4B01 /* KeYiWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,18 +167,42 @@
 				059DB2086B49B680F85B3555 /* Frameworks */,
 				B9C6EB6F79FC54535ACB3053 /* Resources */,
 				F70473819CF7A2F85109210F /* Copy course glossary */,
+				A1B2C3D4E5F60718293A4B0F /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A1B2C3D4E5F60718293A4B04 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				74C61EEF9C048939045A3EDA /* KeYi */,
+				A1B2C3D4E5F60718293A4B07 /* KeYiShared */,
+			);
+			name = KeYi;
+			productName = KeYi;
+			productReference = D2A57DC1D883FD21FB995169 /* KeYi.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A1B2C3D4E5F60718293A4B08 /* KeYiWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1B2C3D4E5F60718293A4B0E /* Build configuration list for PBXNativeTarget "KeYiWidget" */;
+			buildPhases = (
+				A1B2C3D4E5F60718293A4B09 /* Sources */,
+				A1B2C3D4E5F60718293A4B0A /* Frameworks */,
+				A1B2C3D4E5F60718293A4B0B /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				74C61EEF9C048939045A3EDA /* KeYi */,
+				A1B2C3D4E5F60718293A4B06 /* KeYiWidget */,
+				A1B2C3D4E5F60718293A4B07 /* KeYiShared */,
 			);
-			name = KeYi;
-			productName = KeYi;
-			productReference = D2A57DC1D883FD21FB995169 /* KeYi.app */;
-			productType = "com.apple.product-type.application";
+			name = KeYiWidget;
+			productName = KeYiWidget;
+			productReference = A1B2C3D4E5F60718293A4B01 /* KeYiWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -135,6 +215,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					42AEFBAE01D2DFD981F7DA7D = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A1B2C3D4E5F60718293A4B08 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -155,6 +238,7 @@
 			projectRoot = "";
 			targets = (
 				42AEFBAE01D2DFD981F7DA7D /* KeYi */,
+				A1B2C3D4E5F60718293A4B08 /* KeYiWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +249,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				9E35ED8802ED311156F960AF /* technical-terms.tsv in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1B2C3D4E5F60718293A4B0B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -205,7 +296,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1B2C3D4E5F60718293A4B09 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A1B2C3D4E5F60718293A4B04 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1B2C3D4E5F60718293A4B08 /* KeYiWidget */;
+			targetProxy = A1B2C3D4E5F60718293A4B03 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		024EEA213129F6CB818D8A64 /* Release */ = {
@@ -222,6 +328,7 @@
 				INFOPLIST_FILE = KeYi/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "课译";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "课译需要使用麦克风听老师讲课，在本机实时生成英文字幕和中文翻译。不会保存录音。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "课译在 iPhone 本机把英文讲课识别成字幕，声音不会上传。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -298,6 +405,7 @@
 				INFOPLIST_FILE = KeYi/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "课译";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "课译需要使用麦克风听老师讲课，在本机实时生成英文字幕和中文翻译。不会保存录音。";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "课译在 iPhone 本机把英文讲课识别成字幕，声音不会上传。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -320,6 +428,62 @@
 			};
 			name = Debug;
 		};
+		A1B2C3D4E5F60718293A4B0C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KeYiWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "课译实时字幕";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.lzukstudy.keyi.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A1B2C3D4E5F60718293A4B0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KeYiWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "课译实时字幕";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.lzukstudy.keyi.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -337,6 +501,15 @@
 			buildConfigurations = (
 				6F0B85FC643AF9C218F627EA /* Debug */,
 				1B05A9D10F61E514E88AF240 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1B2C3D4E5F60718293A4B0E /* Build configuration list for PBXNativeTarget "KeYiWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1B2C3D4E5F60718293A4B0C /* Debug */,
+				A1B2C3D4E5F60718293A4B0D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
