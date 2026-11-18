@@ -233,11 +233,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func makeWindow() {
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 700),
-                          styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                          styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
         window.title = "课译"
         window.subtitle = "实时听课 · 英中对照"
-        window.titlebarAppearsTransparent = true
+        window.titlebarAppearsTransparent = false
         window.toolbarStyle = .unified
         window.delegate = self
         window.minSize = NSSize(width: 760, height: 520)
@@ -427,7 +427,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
         let toolbar = NSToolbar(identifier: "TingYiMainToolbar")
         toolbar.delegate = self
-        toolbar.displayMode = .iconOnly
+        toolbar.displayMode = .iconAndLabel
         toolbar.allowsUserCustomization = false
         window.toolbar = toolbar
         applyTheme()
@@ -1534,6 +1534,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 /// 标题变化时自动换成对应 SF Symbol 的按钮（开始/停止、暂停/继续、回看/回到实时……）。
 final class StateButton: NSButton {
     private var symbols: [String: String] = [:]
+    private var iconOnly = false
     /// 实心胶囊（主操作按钮）的填充色；为 nil 时是无边框的“图标 + 文字”按钮。
     var fillColor: NSColor? { didSet { restyle() } }
     var textColor: NSColor = .labelColor { didSet { restyle() } }
@@ -1541,6 +1542,7 @@ final class StateButton: NSButton {
     convenience init(symbols: [String: String], iconOnly: Bool = false) {
         self.init(frame: .zero)
         self.symbols = symbols
+        self.iconOnly = iconOnly
         isBordered = iconOnly
         bezelStyle = iconOnly ? .toolbar : .regularSquare
         imagePosition = iconOnly ? .imageOnly : .imageLeading
@@ -1550,10 +1552,13 @@ final class StateButton: NSButton {
 
     override var title: String {
         didSet {
+            // 纯图标按钮：只换图标，不显示文字（否则文字会和图标叠在一起）
+            if iconOnly && title.isEmpty { return }
             if let name = symbols[title] {
                 image = NSImage(systemSymbolName: name, accessibilityDescription: title)
             }
             setAccessibilityLabel(title)
+            if iconOnly { super.title = ""; return }
             restyle()
         }
     }
