@@ -6,14 +6,27 @@ set -euo pipefail
 cd "${0:A:h}"
 export DEVELOPER_DIR=${DEVELOPER_DIR:-$(ls -d /Applications/Xcode*.app 2>/dev/null | grep -v Xcodes | sort -V | tail -1)/Contents/Developer}
 
-team=${KEYI_TEAM:-$(defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier 2>/dev/null \
+# 优先用 Xcode 里“Signing & Capabilities”选过的团队（记在本机 .keyi-team，不上传）；其次用已登录账号的第一个团队。
+[[ -f .keyi-team ]] && KEYI_TEAM=${KEYI_TEAM:-$(<.keyi-team)}
+team=${KEYI_TEAM:-$( { defaults read com.apple.dt.Xcode IDEProvisioningTeamByIdentifier 2>/dev/null || true;
+                       defaults read com.apple.dt.Xcode IDEProvisioningTeams 2>/dev/null || true; } \
     | grep -o 'teamID = [A-Z0-9]*' | head -1 | awk '{print $3}')}
 if [[ -z "$team" ]]; then
     print "没有找到开发团队：请先打开 Xcode › 设置 › Accounts，用 Apple ID 登录一次。"
     exit 1
 fi
 
-device=$(xcrun devicectl list devices 2>/dev/null | awk '/iPhone/ && /available|connected/ {print $3; exit}')
+devices_json=$(mktemp)
+xcrun devicectl list devices --json-output "$devices_json" >/dev/null 2>&1 || true
+device=$(/usr/bin/python3 -c '
+import json, sys
+for d in json.load(open(sys.argv[1])).get("result", {}).get("devices", []):
+    hw = d.get("hardwareProperties", {})
+    if hw.get("platform") == "iOS" and hw.get("reality") == "physical" \
+            and d.get("connectionProperties", {}).get("pairingState") == "paired":
+        print(d["identifier"]); break
+' "$devices_json" 2>/dev/null || true)
+rm -f "$devices_json"
 if [[ -z "$device" ]]; then
     print "没有找到 iPhone：请用数据线连接手机、解锁并点“信任此电脑”。"
     exit 1

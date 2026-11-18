@@ -7,30 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CF5301518EA2CF273C4AB87F /* CaptionTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1108A2EE23C7CF334CDCEF69 /* CaptionTimeline.swift */; };
 		4265A3C3299E18F5CF09426E /* LectureSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A97A7492EAE4A6AC2BC19 /* LectureSummary.swift */; };
-		D1D44030B5B3E8191D921532 /* LectureExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627C7A41DE5E2D1281B36192 /* LectureExport.swift */; };
 		4464C438446011D7CB101824 /* TranslationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7560EAD72221705D1163465B /* TranslationText.swift */; };
 		599000DDE69DB7557830A504 /* GlossaryCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B16CE51B49BEC33C58432DE /* GlossaryCore.swift */; };
-		F2CBDA6BD735734B35B60055 /* GlossaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE916F54DB1A0B9B8CD26BE1 /* GlossaryStore.swift */; };
 		7E8091B59D79568187CA05F8 /* BilingualArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF055502CC3C1B3C0A59903 /* BilingualArchive.swift */; };
-		FA507D1E6A9988DFCB5D06C0 /* ChineseTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65953F999B3884BDFDB51DB8 /* ChineseTranslation.swift */; };
 		85F879A9059A82C1369C5FD7 /* StreamingWords.swift in Sources */ = {isa = PBXBuildFile; fileRef = D653A1D1DE1FB1685171216C /* StreamingWords.swift */; };
 		9E35ED8802ED311156F960AF /* technical-terms.tsv in Resources */ = {isa = PBXBuildFile; fileRef = 8169593D7D857C7E0CB2D02E /* technical-terms.tsv */; };
+		CF5301518EA2CF273C4AB87F /* CaptionTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1108A2EE23C7CF334CDCEF69 /* CaptionTimeline.swift */; };
+		D1D44030B5B3E8191D921532 /* LectureExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627C7A41DE5E2D1281B36192 /* LectureExport.swift */; };
+		F2CBDA6BD735734B35B60055 /* GlossaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE916F54DB1A0B9B8CD26BE1 /* GlossaryStore.swift */; };
+		FA507D1E6A9988DFCB5D06C0 /* ChineseTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65953F999B3884BDFDB51DB8 /* ChineseTranslation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		D2A57DC1D883FD21FB995169 /* KeYi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeYi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1108A2EE23C7CF334CDCEF69 /* CaptionTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionTimeline.swift; sourceTree = "<group>"; };
-		EA6A97A7492EAE4A6AC2BC19 /* LectureSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LectureSummary.swift; sourceTree = "<group>"; };
 		627C7A41DE5E2D1281B36192 /* LectureExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LectureExport.swift; sourceTree = "<group>"; };
+		65953F999B3884BDFDB51DB8 /* ChineseTranslation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChineseTranslation.swift; sourceTree = "<group>"; };
 		7560EAD72221705D1163465B /* TranslationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationText.swift; sourceTree = "<group>"; };
 		7B16CE51B49BEC33C58432DE /* GlossaryCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryCore.swift; sourceTree = "<group>"; };
-		AE916F54DB1A0B9B8CD26BE1 /* GlossaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryStore.swift; sourceTree = "<group>"; };
-		9BF055502CC3C1B3C0A59903 /* BilingualArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BilingualArchive.swift; sourceTree = "<group>"; };
-		65953F999B3884BDFDB51DB8 /* ChineseTranslation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChineseTranslation.swift; sourceTree = "<group>"; };
-		D653A1D1DE1FB1685171216C /* StreamingWords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingWords.swift; sourceTree = "<group>"; };
 		8169593D7D857C7E0CB2D02E /* technical-terms.tsv */ = {isa = PBXFileReference; lastKnownFileType = text; name = "technical-terms.tsv"; path = "../Resources/technical-terms.tsv"; sourceTree = SOURCE_ROOT; };
+		9BF055502CC3C1B3C0A59903 /* BilingualArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BilingualArchive.swift; sourceTree = "<group>"; };
+		AE916F54DB1A0B9B8CD26BE1 /* GlossaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryStore.swift; sourceTree = "<group>"; };
+		D2A57DC1D883FD21FB995169 /* KeYi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KeYi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D653A1D1DE1FB1685171216C /* StreamingWords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingWords.swift; sourceTree = "<group>"; };
+		EA6A97A7492EAE4A6AC2BC19 /* LectureSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LectureSummary.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -208,26 +208,41 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		6F0B85FC643AF9C218F627EA /* Debug */ = {
+		024EEA213129F6CB818D8A64 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KeYi/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "课译";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "课译需要使用麦克风听老师讲课，在本机实时生成英文字幕和中文翻译。不会保存录音。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "课译在 iPhone 本机把英文讲课识别成字幕，声音不会上传。";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.lzukstudy.keyi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_TESTABILITY = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				ONLY_ACTIVE_ARCH = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
-			name = Debug;
+			name = Release;
 		};
 		1B05A9D10F61E514E88AF240 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -236,17 +251,38 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				SDKROOT = iphoneos;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		6F0B85FC643AF9C218F627EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
 		};
 		D87348BDE86A31AE1A1C3907 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -284,59 +320,23 @@
 			};
 			name = Debug;
 		};
-		024EEA213129F6CB818D8A64 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = KeYi/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "课译";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "课译需要使用麦克风听老师讲课，在本机实时生成英文字幕和中文翻译。不会保存录音。";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "课译在 iPhone 本机把英文讲课识别成字幕，声音不会上传。";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.lzukstudy.keyi;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C33C66E28B3501D071CFB88C /* Build configuration list for PBXProject "KeYi" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6F0B85FC643AF9C218F627EA /* Debug */,
-				1B05A9D10F61E514E88AF240 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		84BD75DECF42B745CB4F39AA /* Build configuration list for PBXNativeTarget "KeYi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D87348BDE86A31AE1A1C3907 /* Debug */,
 				024EEA213129F6CB818D8A64 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C33C66E28B3501D071CFB88C /* Build configuration list for PBXProject "KeYi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F0B85FC643AF9C218F627EA /* Debug */,
+				1B05A9D10F61E514E88AF240 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
