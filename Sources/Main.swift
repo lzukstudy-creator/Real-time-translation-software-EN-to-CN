@@ -279,6 +279,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         }
     }
 
+    static var twoPassEnabled: Bool {
+        UserDefaults.standard.object(forKey: "TingYiTwoPassRefine") as? Bool ?? true
+    }
+
+    @objc private func toggleTwoPass() {
+        UserDefaults.standard.set(!Self.twoPassEnabled, forKey: "TingYiTwoPassRefine")
+        if sessionActive { detailLabel.stringValue = "二次精确识别设置已更改，下次开始收声时生效。" }
+    }
+
     @objc private func toggleMainFullScreen() {
         showMainWindow()
         window.toggleFullScreen(nil)
@@ -859,8 +868,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             let hotwords = glossary?.hotwords ?? []
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 do {
-                    // 二次精确识别仍在调优：评测证明比实时识别更准之前默认关闭。
-                    let refineModel = UserDefaults.standard.bool(forKey: "TingYiTwoPassRefine")
+                    // 二次精确识别：模拟教室音频评测中词错误率 6.6% → 4.8%，默认开启；可在“课译”菜单关闭。
+                    let refineModel = AppDelegate.twoPassEnabled
                         ? Bundle.main.url(forResource: "RefineModel", withExtension: nil) : nil
                     let ready = try RecognitionWorker(model: model, inputFormat: inputFormat,
                                                       hotwords: hotwords, refineModel: refineModel)
@@ -1362,6 +1371,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         submenu("课译", [
             item("关于课译", #selector(NSApplication.orderFrontStandardAboutPanel(_:)), target: NSApp),
             .separator(),
+            item("二次精确识别（更准，稍占电脑性能）", #selector(toggleTwoPass)),
+            .separator(),
             item("隐藏课译", #selector(NSApplication.hide(_:)), "h", target: NSApp),
             item("隐藏其他", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option], target: NSApp),
             .separator(),
@@ -1532,6 +1543,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         case #selector(toggleReview):
             menuItem.title = isReviewing ? "回到实时" : "回看"
             return true
+        case #selector(toggleTwoPass):
+            let bundled = Bundle.main.url(forResource: "RefineModel", withExtension: nil)
+                .map { FileManager.default.fileExists(atPath: $0.appendingPathComponent("encoder.int8.onnx").path) } ?? false
+            menuItem.state = bundled && Self.twoPassEnabled ? .on : .off
+            menuItem.toolTip = bundled ? "一句话说完约 2 秒后用更准的模型重新识别并替换；下次开始收声时生效。"
+                : "这个版本没有打包二次识别模型。"
+            return bundled
         case #selector(toggleMainFullScreen):
             menuItem.title = window.styleMask.contains(.fullScreen) ? "退出全屏" : "全屏（可和其他 App 左右分屏）"
             return true

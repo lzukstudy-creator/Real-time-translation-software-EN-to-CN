@@ -100,10 +100,14 @@ final class SentenceRefiner {
         config.model_config.model_type = c("nemo_transducer")
         config.model_config.num_threads = Int32(max(1, min(threads, 4)))
         config.model_config.provider = c("cpu")
+        // 专业词加权需要 bpe.vocab（由 tokens.txt 按固定格式生成，见 build.sh）；没有时退回普通识别，不让原生代码报错。
+        let vocabulary = path + "/bpe.vocab"
+        let hotwords = FileManager.default.fileExists(atPath: vocabulary) ? hotwords : []
         config.decoding_method = c(hotwords.isEmpty ? "greedy_search" : "modified_beam_search")
         config.max_active_paths = 4
         if !hotwords.isEmpty {
             config.model_config.modeling_unit = c("bpe")
+            config.model_config.bpe_vocab = c(vocabulary)
             config.hotwords_score = 1.0
         }
         guard let recognizer = SherpaOnnxCreateOfflineRecognizer(&config) else {

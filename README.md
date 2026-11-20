@@ -37,7 +37,7 @@ zsh Tools/fetch-models.sh          # 下载实时识别模型并校验 SHA-256
 ./build.sh                         # 生成 dist/课译.app
 ```
 
-可选：`zsh Tools/fetch-models.sh --refine` 下载二次精确识别模型（Parakeet TDT 0.6B v2，实验功能），再用 `TINGYI_REFINE=1 ./build.sh` 打包。
+推荐：`zsh Tools/fetch-models.sh --refine` 下载二次精确识别模型（Parakeet TDT 0.6B v2，约 660MB）。下载后 `./build.sh` 会自动打包，App 默认开启（“课译”菜单可关闭）；`TINGYI_REFINE=0 ./build.sh` 可不带。
 
 课件词表 `Resources/coursepack.json` 属于个人学习资料，没有放进仓库；没有它时自动使用空的示例词表，内置技术术语仍然可用。
 
@@ -47,7 +47,7 @@ zsh Tools/fetch-models.sh          # 下载实时识别模型并校验 SHA-256
 |---|---|
 | `Sources/Main.swift` | 主窗口、收声流程、菜单栏 |
 | `Sources/RecognitionWorker.swift`、`StreamingDecoder.swift` | 实时语音识别 |
-| `Sources/SentenceRefiner.swift`、`TwoPassTranscript.swift` | 二次精确识别（实验） |
+| `Sources/SentenceRefiner.swift`、`TwoPassTranscript.swift` | 二次精确识别（带专业词加权） |
 | `Sources/ChineseTranslation.swift`、`TranslationText.swift` | 中文翻译与翻译前清理 |
 | `Sources/CaptionTextView.swift`、`CaptionStyle.swift` | 字幕显示、动画、字体与颜色 |
 | `Sources/Glossary*.swift` | 术语表 |
